@@ -65,9 +65,14 @@ def parse_num(s: str) -> int:
 
 # ---- パーサー ----
 def parse_moneyforward(text: str) -> dict:
-    res = {"total": 0, "income": 0, "expense": 0}
-    for line in text.splitlines():
-        m = re.search(r"総資産[^\d]*([\d,]+)", line)
+    res = {"total": 0, "income": 0, "expense": 0, "categories": []}
+    # 資産内訳カテゴリ名（これらの行は「名称 金額円 割合%」形式）
+    cat_names = ["預金・現金・暗号資産", "株式（現物）", "株式（信用）",
+                 "投資信託", "年金", "ポイント・マイル", "債券", "FX", "不動産"]
+    for raw in text.splitlines():
+        line = raw.strip()
+        # 総資産 / 資産総額
+        m = re.search(r"(?:資産総額|総資産)[：:\s]*([\d,]+)\s*円", line)
         if m:
             res["total"] = parse_num(m.group(1))
         m = re.search(r"収入[^\d]*([\d,]+)", line)
@@ -76,6 +81,13 @@ def parse_moneyforward(text: str) -> dict:
         m = re.search(r"支出[^\d]*([\d,]+)", line)
         if m:
             res["expense"] = parse_num(m.group(1))
+        # 資産内訳カテゴリ（割合%付きの行のみ）
+        for cat in cat_names:
+            cm = re.match(rf"^{re.escape(cat)}\s+([\d,]+)\s*円\s+[\d.]+\s*%", line)
+            if cm:
+                amt = parse_num(cm.group(1))
+                if not any(c["name"] == cat for c in res["categories"]):
+                    res["categories"].append({"name": cat, "amount": amt})
     if not res["total"]:
         nums = [parse_num(x) for x in re.findall(r"([\d,]+)円", text)]
         nums = [n for n in nums if n > 10_000]
@@ -237,7 +249,7 @@ def generate_advice(assets, monthly, ret, age, reach, on_track):
 
 
 # ---- メイン表示 ----
-def run_report(total_assets, monthly, ret, age, rakuten):
+def run_report(total_assets, monthly, ret, age, rakuten, mf=None):
     reach = reach_age(age, total_assets, monthly, ret)
     on_track = reach is not None and reach <= 40
     years_left = 40 - age
@@ -314,6 +326,17 @@ def run_report(total_assets, monthly, ret, age, rakuten):
         if line.strip():
             print(color(line, C.GRAY))
         print()
+
+    # 資産内訳（マネーフォワード）
+    if mf and mf.get("categories"):
+        header("🧩 資産内訳（マネーフォワード）")
+        cats = mf["categories"]
+        cat_total = sum(c["amount"] for c in cats) or 1
+        for c in cats:
+            pct = c["amount"] / cat_total * 100
+            barlen = round(pct / 100 * 24)
+            bar = color("█" * barlen, C.PURPLE) + color("░" * (24 - barlen), C.GRAY)
+            print(f"  {c['name']:<14} {bar} {pct:5.1f}%  {color(fmt_yen(c['amount']), C.BLUE)}")
 
     # 保有資産
     if rakuten["holdings"]:
@@ -416,7 +439,7 @@ def main():
                      "データを貼り付けてください。\n", C.YELLOW))
         sys.exit(1)
 
-    run_report(total_assets, monthly, ret, age, rakuten)
+    run_report(total_assets, monthly, ret, age, rakuten, mf)
 
 
 if __name__ == "__main__":
