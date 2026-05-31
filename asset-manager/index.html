@@ -2,8 +2,15 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>資産管理 - 40歳1億円ロードマップ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <title>資産ロードマップ</title>
+  <!-- iOS ホーム画面アプリ用設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="資産1億">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Ctext x='90' y='86' font-size='62' text-anchor='middle' fill='%2360a5fa' font-family='sans-serif' font-weight='bold'%3E%C2%A5%3C/text%3E%3Ctext x='90' y='140' font-size='34' text-anchor='middle' fill='%23a78bfa' font-family='sans-serif' font-weight='bold'%3E1%E5%84%84%3C/text%3E%3C/svg%3E">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,7 +19,15 @@
       color: #e2e8f0;
       min-height: 100vh;
     }
-    #app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    #app {
+      max-width: 1100px; margin: 0 auto;
+      padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* タップしやすいよう入力欄とボタンを大きめに */
+    input, textarea, .btn, .tab { font-size: 16px; }  /* 16px未満だとiOSで自動ズームするのを防止 */
+    .btn { min-height: 48px; }
+    .tab { min-height: 44px; display: flex; align-items: center; justify-content: center; }
 
     h1 {
       font-size: 1.8rem;
