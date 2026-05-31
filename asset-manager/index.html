@@ -197,6 +197,47 @@ let S = Object.assign({
 let step = S._step || 0;
 const STEPS = ['基本情報','収入・キャリア','資産・投資','保険・固定費','家族','目標'];
 
+// ============ コミュニティ（スレッド共有・デモ：端末内保存） ============
+const LS_THREADS='moneyplan_threads_v1';
+let nav = 'diagnose';        // 'diagnose' | 'community'
+let openThreadId = null;     // 開いているスレッドID
+
+function loadThreads(){
+  try{ const t=JSON.parse(localStorage.getItem(LS_THREADS)); if(t&&t.length) return t; }catch{}
+  return seedThreads();
+}
+function saveThreads(t){ try{localStorage.setItem(LS_THREADS,JSON.stringify(t));}catch{} }
+function seedThreads(){
+  const seed=[
+    {id:'t1', nick:'さくら', ts:Date.now()-86400000*2,
+     title:'30歳・3000万。FIREしたいけど投資配分どう？',
+     msg:'地方在住メーカー勤務です。暗号資産が多めなのが不安…アドバイスください！',
+     snap:{age:30,industry:'メーカー（製造）',income:480,currentAssets:3000,targetAmount:8000,targetAge:45,
+       monthlyNisa:50000,monthlyTokutei:20000,monthlyCrypto:40000,monthlySaving:30000,zaikei:0,reach:'46歳3ヶ月'},
+     comments:[{nick:'ぽんた',ts:Date.now()-86400000,body:'暗号資産の比率が高めですね。コアをオルカンに寄せると安定すると思います。'}]},
+    {id:'t2', nick:'たかし', ts:Date.now()-3600000*5,
+     title:'40歳1億まであと一歩。財形やめるべき？',
+     msg:'財形に月3万入れてますが利回りほぼ0。NISAに回すか迷ってます。',
+     snap:{age:36,industry:'金融・保険',income:720,currentAssets:5200,targetAmount:10000,targetAge:40,
+       monthlyNisa:80000,monthlyTokutei:50000,monthlyCrypto:0,monthlySaving:40000,zaikei:30000,reach:'41歳8ヶ月'},
+     comments:[]},
+  ];
+  saveThreads(seed); return seed;
+}
+let THREADS = loadThreads();
+
+function timeAgo(ts){
+  const d=Date.now()-ts, m=Math.floor(d/60000), h=Math.floor(d/3600000), day=Math.floor(d/86400000);
+  if(day>0) return day+'日前'; if(h>0) return h+'時間前'; if(m>0) return m+'分前'; return 'たった今';
+}
+function ensureNick(){
+  if(S.nickname) return S.nickname;
+  const n=prompt('コミュニティで使うニックネームを入力してください','');
+  if(n && n.trim()){ S.nickname=n.trim().slice(0,16); save(S); }
+  return S.nickname;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
 // ============ Simulation ============
 function projectIncome(age){
   if(age > S.retireAge) return 0;
@@ -421,7 +462,18 @@ function makeIncomeChart(income_rows){
 }
 
 // ============ Render ============
-function render(){ S._step=step; save(S); step<STEPS.length?renderWizard():renderResult(); window.scrollTo(0,0); }
+function navBar(){
+  return `<div style="display:flex;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:5px;margin-bottom:16px">
+    <div onclick="nav='diagnose';openThreadId=null;render()" style="flex:1;text-align:center;padding:10px;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;${nav==='diagnose'?'background:#fff;color:var(--accent);box-shadow:var(--shadow-sm)':'color:var(--sub)'}">📊 マイ診断</div>
+    <div onclick="nav='community';openThreadId=null;render()" style="flex:1;text-align:center;padding:10px;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;${nav==='community'?'background:#fff;color:var(--accent);box-shadow:var(--shadow-sm)':'color:var(--sub)'}">💬 みんなの資産</div>
+  </div>`;
+}
+function render(){
+  S._step=step; save(S);
+  if(nav==='community'){ openThreadId?renderThread():renderCommunity(); window.scrollTo(0,0); return; }
+  step<STEPS.length?renderWizard():renderResult();
+  window.scrollTo(0,0);
+}
 
 function stepper(){
   return `<div class="stepper">${STEPS.map((_,i)=>`<div class="step-dot ${i<step?'done':i===step?'active':''}"></div>`).join('')}</div>
@@ -562,6 +614,7 @@ function renderResult(){
   el('app').innerHTML=`
     <div class="logo"><span class="icon">💹</span><h1>あなたの資産プラン</h1>
       <p>${S.age}歳・${S.industry}・年収${S.income}万円 → 目標 ${fmtY(target)} @ ${S.targetAge}歳</p></div>
+    ${navBar()}
     ${alertHtml}
     <div class="stat-grid">
       <div class="stat accent"><div class="lbl">現在の総資産</div><div class="val">${fmtY(S.currentAssets*1e4)}</div><div class="sub">達成率 ${progress.toFixed(1)}%</div></div>
@@ -600,11 +653,115 @@ function renderResult(){
       </div></div>`).join('')}
     </div>
 
+    <button class="btn" style="margin-top:4px" onclick="shareCurrentPlan()">📣 みんなに共有して相談する</button>
     <div class="btn-row">
       <button class="btn sec" onclick="step=${STEPS.length-1};render()">← 設定を調整</button>
       <button class="btn ghost" onclick="step=0;render()">最初から</button>
     </div>`;
   initChartTooltip();
+}
+
+// ============ Community ============
+function snapBadges(snap){
+  const inv=(snap.monthlyNisa||0)+(snap.monthlyTokutei||0)+(snap.monthlyCrypto||0);
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">
+    <span class="tag blue">${snap.age}歳</span>
+    <span class="tag blue">${escapeHtml(snap.industry)}</span>
+    <span class="tag green">資産 ${fmtY(snap.currentAssets*1e4)}</span>
+    <span class="tag yellow">目標 ${fmtY(snap.targetAmount*1e4)}@${snap.targetAge}歳</span>
+  </div>`;
+}
+function snapDetail(snap){
+  const rows=[
+    ['年収',`${snap.income}万円`],['月NISA',fmtY(snap.monthlyNisa||0)],
+    ['月特定口座',fmtY(snap.monthlyTokutei||0)],['月暗号資産',fmtY(snap.monthlyCrypto||0)],
+    ['月現金貯金',fmtY(snap.monthlySaving||0)],['月財形',fmtY(snap.zaikei||0)],
+    ['達成予測',snap.reach||'-'],
+  ];
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+    ${rows.map(([k,v])=>`<div style="background:var(--bg);border-radius:10px;padding:8px 10px"><div style="font-size:.7rem;color:var(--sub)">${k}</div><div style="font-weight:700;font-size:.86rem">${v}</div></div>`).join('')}
+  </div>`;
+}
+
+function renderCommunity(){
+  el('app').innerHTML=`
+    <div class="logo"><span class="icon">💬</span><h1>みんなの資産</h1><p>資産プランを共有してアドバイスを送り合おう</p></div>
+    ${navBar()}
+    <button class="btn" onclick="nav='diagnose';render()">＋ 自分のプランを共有する（マイ診断から）</button>
+    <div style="margin-top:14px">
+    ${THREADS.sort((a,b)=>b.ts-a.ts).map(t=>`
+      <div class="card" style="cursor:pointer" onclick="openThreadId='${t.id}';render()">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:.82rem;color:var(--accent)">${escapeHtml(t.nick)}</strong>
+          <span style="font-size:.72rem;color:var(--sub)">${timeAgo(t.ts)}</span>
+        </div>
+        <h2 style="font-size:1rem;margin:6px 0 2px">${escapeHtml(t.title)}</h2>
+        ${snapBadges(t.snap)}
+        <div style="font-size:.78rem;color:var(--sub);display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <span>${escapeHtml((t.msg||'').slice(0,40))}${(t.msg||'').length>40?'…':''}</span>
+          <span>💬 ${t.comments.length}</span>
+        </div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderThread(){
+  const t=THREADS.find(x=>x.id===openThreadId);
+  if(!t){ nav='community'; openThreadId=null; render(); return; }
+  el('app').innerHTML=`
+    ${navBar()}
+    <div style="margin-bottom:12px"><a onclick="openThreadId=null;render()" style="color:var(--sub);font-size:.82rem;cursor:pointer">← スレッド一覧へ</a></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong style="font-size:.85rem;color:var(--accent)">${escapeHtml(t.nick)}</strong>
+        <span style="font-size:.72rem;color:var(--sub)">${timeAgo(t.ts)}</span>
+      </div>
+      <h2 style="font-size:1.1rem;margin:6px 0">${escapeHtml(t.title)}</h2>
+      <p style="font-size:.85rem;color:var(--text);line-height:1.6">${escapeHtml(t.msg)}</p>
+      ${snapBadges(t.snap)}
+      ${snapDetail(t.snap)}
+    </div>
+    <div class="card">
+      <div class="sec-title">💡 アドバイス（${t.comments.length}件）</div>
+      <div id="commentList">
+        ${t.comments.length?t.comments.map(c=>`
+          <div class="advice"><div class="ic">💬</div><div>
+            <h3>${escapeHtml(c.nick)} <span style="font-weight:400;color:var(--sub);font-size:.72rem">${timeAgo(c.ts)}</span></h3>
+            <p>${escapeHtml(c.body)}</p>
+          </div></div>`).join(''):'<p style="color:var(--sub);font-size:.82rem">まだアドバイスがありません。最初の一言を送りましょう！</p>'}
+      </div>
+      <label style="margin-top:16px">アドバイスを送る</label>
+      <textarea id="commentBody" rows="3" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;font-size:16px;font-family:inherit;resize:vertical" placeholder="例：暗号資産の比率を下げてオルカン中心にすると安定しますよ"></textarea>
+      <button class="btn" style="margin-top:10px" onclick="postComment('${t.id}')">送信する</button>
+    </div>`;
+}
+
+function postComment(id){
+  const t=THREADS.find(x=>x.id===id); if(!t) return;
+  const body=el('commentBody').value.trim(); if(!body){ alert('内容を入力してください'); return; }
+  const nick=ensureNick(); if(!nick) return;
+  t.comments.push({nick, ts:Date.now(), body:body.slice(0,500)});
+  saveThreads(THREADS); render();
+}
+
+function shareCurrentPlan(){
+  const nick=ensureNick(); if(!nick) return;
+  const title=prompt('スレッドのタイトル（相談したいこと）','例：40歳1億まで間に合う？投資配分の相談');
+  if(title===null) return;
+  const msg=prompt('みんなに伝えたいこと・聞きたいこと','');
+  if(msg===null) return;
+  const sim=simulate();
+  const reach=sim.reachExact?`${Math.floor(sim.reachExact)}歳${Math.round((sim.reachExact%1)*12)}ヶ月`:'未達';
+  const t={ id:'t'+Date.now(), nick, ts:Date.now(),
+    title:(title.trim()||'資産プランの相談').slice(0,60),
+    msg:(msg.trim()).slice(0,400),
+    snap:{age:S.age,industry:S.industry,income:S.income,currentAssets:S.currentAssets,
+      targetAmount:S.targetAmount,targetAge:S.targetAge,monthlyNisa:S.monthlyNisa,
+      monthlyTokutei:S.monthlyTokutei,monthlyCrypto:S.monthlyCrypto,monthlySaving:S.monthlySaving,
+      zaikei:S.zaikei,reach},
+    comments:[] };
+  THREADS.push(t); saveThreads(THREADS);
+  nav='community'; openThreadId=t.id; render();
 }
 
 render();
