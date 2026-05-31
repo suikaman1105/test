@@ -4,557 +4,596 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>マネープラン診断</title>
-  <!-- iOS ホーム画面アプリ用設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="資産プラン">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Ctext x='90' y='86' font-size='62' text-anchor='middle' fill='%2360a5fa' font-family='sans-serif' font-weight='bold'%3E%C2%A5%3C/text%3E%3Ctext x='90' y='140' font-size='30' text-anchor='middle' fill='%23a78bfa' font-family='sans-serif' font-weight='bold'%3EPLAN%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#ffffff">
   <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --border: #e8edf5;
+      --text: #1a2236;
+      --sub: #6b7a99;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --shadow: 0 2px 16px rgba(108,99,255,.10);
+      --shadow-sm: 0 1px 6px rgba(0,0,0,.07);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
-      background: #0f172a; color: #e2e8f0; min-height: 100vh;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; }
     #app {
-      max-width: 720px; margin: 0 auto;
-      padding: calc(20px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
+      max-width: 680px; margin: 0 auto;
+      padding: calc(20px + env(safe-area-inset-top)) 16px calc(60px + env(safe-area-inset-bottom));
     }
-    h1 {
-      font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 4px;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .subtitle { text-align: center; color: #94a3b8; font-size: .85rem; margin-bottom: 20px; }
 
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
-    .card h2 { font-size: 1.05rem; color: #60a5fa; margin-bottom: 4px; }
-    .card .hint { font-size: .78rem; color: #64748b; margin-bottom: 16px; line-height: 1.5; }
-
-    label { display: block; font-size: .82rem; color: #cbd5e1; margin: 14px 0 6px; }
-    label:first-of-type { margin-top: 0; }
-    .req { color: #f87171; font-size: .72rem; margin-left: 4px; }
-    input, select {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 10px;
-      color: #e2e8f0; padding: 12px 14px; font-size: 16px; transition: border-color .2s;
-    }
-    input:focus, select:focus { outline: none; border-color: #60a5fa; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    @media(max-width:540px){ .row3{grid-template-columns:1fr;} }
-    .suffix-wrap { position: relative; }
-    .suffix-wrap .sfx { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: .85rem; pointer-events: none; }
-    .suffix-wrap input { padding-right: 42px; }
-
-    .btn {
-      background: linear-gradient(135deg, #3b82f6, #7c3aed); color: #fff; border: none;
-      border-radius: 10px; padding: 14px 24px; font-size: 16px; font-weight: 600;
-      cursor: pointer; min-height: 50px; transition: opacity .2s; width: 100%;
-    }
-    .btn:hover { opacity: .9; }
-    .btn.sec { background: #334155; }
-    .btn.ghost { background: transparent; border: 1px solid #334155; color: #94a3b8; }
-    .btn-row { display: flex; gap: 12px; margin-top: 18px; }
+    /* Header */
+    .logo { text-align: center; margin-bottom: 6px; }
+    .logo .icon { font-size: 2.2rem; display: block; margin-bottom: 2px; }
+    .logo h1 { font-size: 1.55rem; font-weight: 800; color: var(--accent); letter-spacing: -.02em; }
+    .logo p { font-size: .82rem; color: var(--sub); margin-top: 2px; }
 
     /* Stepper */
-    .stepper { display: flex; gap: 6px; margin-bottom: 20px; }
-    .step-dot { flex: 1; height: 5px; border-radius: 999px; background: #334155; transition: background .3s; }
-    .step-dot.done { background: #60a5fa; }
-    .step-dot.active { background: #a78bfa; }
-    .step-label { text-align: center; font-size: .78rem; color: #64748b; margin-bottom: 14px; }
+    .stepper { display: flex; gap: 5px; margin: 18px 0 6px; }
+    .step-dot { flex: 1; height: 4px; border-radius: 999px; background: var(--border); transition: background .3s; }
+    .step-dot.done { background: var(--accent); }
+    .step-dot.active { background: var(--accent2); }
+    .step-lbl { text-align: center; font-size: .76rem; color: var(--sub); margin-bottom: 14px; }
 
-    /* family members */
-    .member { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; }
-    .member .del { background: #450a0a; color: #f87171; border: none; border-radius: 8px; padding: 12px; cursor: pointer; font-size: 14px; }
+    /* Card */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow-sm); }
+    .card h2 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .card .hint { font-size: .78rem; color: var(--sub); line-height: 1.6; margin-bottom: 16px; margin-top: 4px; }
 
-    /* Results */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .stat { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px; text-align: center; }
-    .stat .lbl { font-size: .74rem; color: #64748b; margin-bottom: 5px; }
-    .stat .val { font-size: 1.5rem; font-weight: 700; }
-    .stat .sub { font-size: .72rem; color: #64748b; margin-top: 3px; }
-    .stat.blue { border-color: #3b82f6; background: #1e3a5f; } .stat.blue .val { color: #60a5fa; }
-    .stat.green .val { color: #34d399; } .stat.yellow .val { color: #fbbf24; } .stat.red .val { color: #f87171; }
+    /* Form */
+    label { display: block; font-size: .8rem; font-weight: 600; color: var(--sub); margin: 14px 0 5px; }
+    label:first-of-type { margin-top: 0; }
+    .req { color: var(--red); font-size: .7rem; margin-left: 3px; }
+    .input-wrap { position: relative; }
+    .input-wrap .sfx { position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      color: var(--sub); font-size: .84rem; pointer-events: none; }
+    input, select {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
+      color: var(--text); padding: 11px 14px; font-size: 16px; transition: border-color .2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
+    .input-wrap input { padding-right: 40px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media(max-width:500px){ .row3{grid-template-columns:1fr 1fr;} }
 
-    .bar-wrap { background: #0f172a; border-radius: 999px; height: 12px; overflow: hidden; margin: 8px 0; }
-    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#3b82f6,#7c3aed); transition: width .8s; }
-    .bar-labels { display: flex; justify-content: space-between; font-size: .72rem; color: #64748b; }
+    /* Checkbox toggle */
+    .toggle { display: flex; align-items: center; gap: 10px; margin-top: 14px; cursor: pointer; }
+    .toggle input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+    .toggle span { font-size: .84rem; color: var(--text); }
 
-    .alert { border-radius: 10px; padding: 13px 16px; margin-bottom: 14px; font-size: .86rem; line-height: 1.55; }
-    .alert.green { background: #064e3b; border-left: 3px solid #34d399; }
-    .alert.yellow { background: #451a03; border-left: 3px solid #f59e0b; }
-    .alert.blue { background: #1e3a5f; border-left: 3px solid #3b82f6; }
+    /* Buttons */
+    .btn { background: var(--accent); color: #fff; border: none; border-radius: 14px;
+      padding: 15px 24px; font-size: 16px; font-weight: 700; cursor: pointer; min-height: 52px;
+      width: 100%; transition: transform .1s, box-shadow .1s; box-shadow: 0 4px 14px rgba(108,99,255,.35); }
+    .btn:active { transform: scale(.98); }
+    .btn.sec { background: var(--bg); color: var(--text); box-shadow: var(--shadow-sm); border: 1.5px solid var(--border); }
+    .btn.ghost { background: transparent; color: var(--sub); border: 1.5px solid var(--border); box-shadow: none; }
+    .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+    .restart { text-align: center; margin-top: 10px; }
+    .restart a { color: var(--sub); font-size: .78rem; cursor: pointer; }
 
-    .chart-wrap { width: 100%; overflow-x: auto; }
-    svg.chart { display: block; }
-    .ax { font-size: 10px; fill: #94a3b8; }
+    /* Family */
+    .member { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+    .member .del { background: #fef2f2; color: var(--red); border: none; border-radius: 10px; padding: 11px 13px; cursor: pointer; font-size: 14px; }
 
-    .advice { display: flex; gap: 12px; padding: 13px 0; border-bottom: 1px solid #0f172a; }
+    /* Stats */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .stat { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px;
+      padding: 16px; box-shadow: var(--shadow-sm); }
+    .stat .lbl { font-size: .73rem; color: var(--sub); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    .stat .val { font-size: 1.45rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .stat .sub { font-size: .71rem; color: var(--sub); margin-top: 4px; }
+    .stat.accent { border-color: var(--accent); background: #f0efff; }
+    .stat.accent .val { color: var(--accent); }
+    .stat.green { border-color: #bbf7d0; background: #f0fdf4; } .stat.green .val { color: var(--green); }
+    .stat.yellow { border-color: #fde68a; background: #fffbeb; } .stat.yellow .val { color: var(--yellow); }
+    .stat.red { border-color: #fecaca; background: #fef2f2; } .stat.red .val { color: var(--red); }
+
+    /* Progress bar */
+    .prog-wrap { background: var(--bg); border-radius: 999px; height: 10px; overflow: hidden; margin: 8px 0; }
+    .prog-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .8s; }
+    .prog-lbls { display: flex; justify-content: space-between; font-size: .71rem; color: var(--sub); }
+
+    /* Alert */
+    .alert { border-radius: 12px; padding: 13px 16px; margin-bottom: 14px; font-size: .86rem; line-height: 1.6; font-weight: 500; }
+    .alert.green { background: #dcfce7; color: #166534; }
+    .alert.yellow { background: #fef9c3; color: #854d0e; }
+    .alert.blue { background: #eff6ff; color: #1e40af; }
+
+    /* Chart */
+    .chart-wrap { position: relative; width: 100%; }
+    .chart-wrap svg { display: block; }
+    .chart-tip { position: absolute; background: var(--text); color: #fff; border-radius: 10px;
+      padding: 9px 12px; font-size: .78rem; pointer-events: none; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2); display: none; z-index: 10; line-height: 1.7; }
+    .chart-tip.show { display: block; }
+
+    /* Legend */
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: .76rem; color: var(--sub); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* Advice */
+    .advice { display: flex; gap: 13px; padding: 14px 0; border-bottom: 1.5px solid var(--bg); }
     .advice:last-child { border-bottom: none; }
-    .advice .ic { font-size: 1.4rem; flex-shrink: 0; }
-    .advice h3 { font-size: .9rem; margin-bottom: 3px; }
-    .advice p { font-size: .8rem; color: #94a3b8; line-height: 1.55; }
-    .advice .impact { font-size: .76rem; color: #34d399; margin-top: 4px; font-weight: 600; }
-    .tag { display:inline-block; border-radius:999px; padding:1px 9px; font-size:.7rem; margin-right:5px; }
-    .tag.red{background:#450a0a;color:#f87171;} .tag.yellow{background:#451a03;color:#fbbf24;}
-    .tag.blue{background:#1e3a5f;color:#60a5fa;} .tag.green{background:#064e3b;color:#34d399;}
+    .advice .ic { font-size: 1.5rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .advice h3 { font-size: .9rem; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+    .advice p { font-size: .8rem; color: var(--sub); line-height: 1.6; }
+    .advice .impact { font-size: .75rem; color: var(--accent); margin-top: 5px; font-weight: 700; }
+    .tag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: .7rem; font-weight: 700; margin-right: 5px; }
+    .tag.red { background: #fef2f2; color: var(--red); }
+    .tag.yellow { background: #fffbeb; color: #b45309; }
+    .tag.blue { background: #eff6ff; color: #1d4ed8; }
+    .tag.green { background: #f0fdf4; color: #15803d; }
 
-    .breakdown-row { display:flex; align-items:center; gap:10px; font-size:.82rem; margin-bottom:8px; }
-    .breakdown-row .nm { width: 90px; color:#cbd5e1; }
-    .breakdown-row .bb { flex:1; height:18px; background:#0f172a; border-radius:6px; overflow:hidden; }
-    .breakdown-row .bf { height:100%; background:linear-gradient(90deg,#3b82f6,#7c3aed); }
-    .breakdown-row .vv { width:80px; text-align:right; color:#60a5fa; font-weight:600; }
+    /* Section title */
+    .sec-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--sub); margin-bottom: 12px; }
 
-    .toggle { display:flex; align-items:center; gap:10px; margin-top:14px; cursor:pointer; user-select:none; }
-    .toggle input { width:auto; }
-    .toggle span { font-size:.84rem; color:#cbd5e1; }
-
-    .restart { text-align:center; margin-top:8px; }
-    .restart a { color:#64748b; font-size:.8rem; text-decoration:underline; cursor:pointer; }
+    /* income chart axis */
+    .ax { font-size: 10px; fill: #94a3b8; }
   </style>
 </head>
 <body>
 <div id="app"></div>
+<div class="chart-tip" id="tip"></div>
 
 <script>
-// ============ 内蔵データ：業種別 平均年収カーブ（万円） ============
-// 厚労省・国税庁の年齢階級別平均をベースにした概算。実値ではなく傾向の目安。
-const AGE_BANDS = [22, 27, 32, 37, 42, 47, 52, 57];
-const BASE_CURVE = { 22:270, 27:390, 32:460, 37:520, 42:580, 47:630, 52:670, 57:680 };
+// ============ 業種別年収カーブ ============
+const AGE_BANDS = [22,27,32,37,42,47,52,57];
+const BASE = {22:270,27:390,32:460,37:520,42:580,47:630,52:670,57:680};
 const INDUSTRIES = {
-  "IT・通信":       1.30,
-  "コンサル":        1.45,
-  "金融・保険":      1.30,
-  "総合商社":        1.55,
-  "メーカー（製造）": 1.10,
-  "医療・製薬":      1.20,
-  "建設・不動産":    1.10,
-  "公務員":          1.00,
-  "小売・サービス":  0.85,
-  "教育":            0.95,
-  "マスコミ・広告":  1.20,
-  "その他":          1.00,
+  "IT・通信":1.30,"コンサル":1.45,"金融・保険":1.30,"総合商社":1.55,
+  "メーカー（製造）":1.10,"医療・製薬":1.20,"建設・不動産":1.10,
+  "公務員":1.00,"小売・サービス":0.85,"教育":0.95,"マスコミ・広告":1.20,"その他":1.00
 };
-
-// 補間して指定年齢の平均年収を返す
-function curveIncome(age, industry) {
+function curveIncome(age, industry){
   const mult = INDUSTRIES[industry] ?? 1.0;
   const a = Math.max(22, Math.min(59, age));
-  // 線形補間
   let lo = AGE_BANDS[0], hi = AGE_BANDS[AGE_BANDS.length-1];
-  for (let i=0;i<AGE_BANDS.length-1;i++){
-    if (a>=AGE_BANDS[i] && a<=AGE_BANDS[i+1]){ lo=AGE_BANDS[i]; hi=AGE_BANDS[i+1]; break; }
-  }
-  if (a<=AGE_BANDS[0]) { lo=hi=AGE_BANDS[0]; }
-  if (a>=AGE_BANDS[AGE_BANDS.length-1]) { lo=hi=AGE_BANDS[AGE_BANDS.length-1]; }
-  const t = hi===lo ? 0 : (a-lo)/(hi-lo);
-  const base = BASE_CURVE[lo] + (BASE_CURVE[hi]-BASE_CURVE[lo])*t;
-  return base * mult; // 万円
+  for(let i=0;i<AGE_BANDS.length-1;i++) if(a>=AGE_BANDS[i]&&a<=AGE_BANDS[i+1]){lo=AGE_BANDS[i];hi=AGE_BANDS[i+1];break;}
+  if(a<=AGE_BANDS[0]){lo=hi=AGE_BANDS[0];} if(a>=AGE_BANDS[AGE_BANDS.length-1]){lo=hi=AGE_BANDS[AGE_BANDS.length-1];}
+  const t = hi===lo?0:(a-lo)/(hi-lo);
+  return (BASE[lo]+(BASE[hi]-BASE[lo])*t)*mult;
 }
 
-// ============ ユーティリティ ============
-function fmtYen(n){ n=Math.round(n);
-  if(Math.abs(n)>=1e8) return (n/1e8).toFixed(2)+'億円';
+// ============ Utils ============
+function fmtY(n){ n=Math.round(n);
+  if(Math.abs(n)>=1e8) return (n/1e8).toFixed(2)+'億';
   if(Math.abs(n)>=1e4) return Math.round(n/1e4).toLocaleString()+'万円';
   return n.toLocaleString()+'円';
 }
-function man(n){ return Math.round(n/1e4); } // 円→万
+function man(n){ return Math.round(n/1e4); }
 function el(id){ return document.getElementById(id); }
 
-// ============ 状態 ============
-const LS_KEY = 'moneyplan_v1';
-function loadState(){
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
-}
-function saveState(s){ try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {} }
+// ============ State ============
+const LS='moneyplan_v2';
+function load(){ try{return JSON.parse(localStorage.getItem(LS))||{};}catch{return{};} }
+function save(s){ try{localStorage.setItem(LS,JSON.stringify(s));}catch{} }
 
 let S = Object.assign({
-  // 基本
-  age: 32, gender: '男性',
-  // 収入・キャリア
-  income: 500, industry: 'IT・通信', raiseMode: 'curve', raiseRate: 2,
-  retireAge: 65,
-  // 資産
-  currentAssets: 3403, // 万円
-  // 月次フロー（円）
-  monthlySaving: 50000,       // 現金貯金
-  monthlyNisa: 50000,         // NISA積立
-  monthlyTokutei: 30000,      // 特定口座
-  monthlyCrypto: 10000,       // 暗号資産
-  zaikei: 20000,              // 財形貯蓄（月）
-  insurance: 15000,           // 保険料（月）
-  insuranceType: '掛け捨て',  // or 貯蓄型
-  // 利回り想定(%)
-  retNisa: 5, retTokutei: 5, retCrypto: 10, retCash: 0.1,
-  flowGrowsWithIncome: true,
-  // 目標
-  targetAmount: 10000,  // 万円（=1億）
-  targetAge: 40,
-  // 家族
-  family: [],
-}, loadState());
+  age:32, gender:'男性', currentAssets:3403,
+  income:500, industry:'IT・通信', raiseMode:'curve', raiseRate:2, retireAge:65,
+  monthlySaving:50000, monthlyNisa:50000, monthlyTokutei:30000, monthlyCrypto:10000, zaikei:20000,
+  insurance:15000, insuranceType:'掛け捨て',
+  retNisa:5, retTokutei:5, retCrypto:10, retCash:0.1,
+  flowGrowsWithIncome:true,
+  targetAmount:10000, targetAge:40,
+  family:[],
+}, load());
 
 let step = S._step || 0;
 const STEPS = ['基本情報','収入・キャリア','資産・投資','保険・固定費','家族','目標'];
 
-// ============ レンダリング ============
-function render(){
-  S._step = step; saveState(S);
-  if (step < STEPS.length) renderWizard();
-  else renderResult();
-  window.scrollTo(0,0);
-}
-
-function stepper(){
-  let dots = '';
-  for(let i=0;i<STEPS.length;i++){
-    const cls = i<step?'done':(i===step?'active':'');
-    dots += `<div class="step-dot ${cls}"></div>`;
-  }
-  return `<div class="stepper">${dots}</div>
-    <div class="step-label">STEP ${step+1} / ${STEPS.length}　${STEPS[step]}</div>`;
-}
-
-function field(label, id, val, opts={}){
-  const { type='number', sfx='', req=false, ph='' } = opts;
-  return `<label>${label}${req?'<span class="req">*</span>':''}</label>
-    <div class="suffix-wrap">
-      <input type="${type}" id="${id}" value="${val??''}" placeholder="${ph}">
-      ${sfx?`<span class="sfx">${sfx}</span>`:''}
-    </div>`;
-}
-function selectField(label, id, val, options){
-  const opts = options.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('');
-  return `<label>${label}</label><select id="${id}">${opts}</select>`;
-}
-
-function renderWizard(){
-  let body = '';
-  if (step===0){
-    body = `<div class="card">
-      <h2>👤 基本情報</h2>
-      <div class="hint">まずはあなた自身について教えてください。</div>
-      <div class="row">
-        ${field('現在の年齢','f_age',S.age,{sfx:'歳',req:true})}
-        ${selectField('性別','f_gender',S.gender,['男性','女性','その他'])}
-      </div>
-      ${field('現在の総資産（預金＋投資など合計）','f_assets',S.currentAssets,{sfx:'万円',req:true})}
-      <div class="hint" style="margin-top:6px;margin-bottom:0">※ マネーフォワードの「資産総額」をそのまま入れればOK</div>
-    </div>`;
-  }
-  else if (step===1){
-    body = `<div class="card">
-      <h2>💼 収入・キャリア</h2>
-      <div class="hint">将来の年収は、業種別の平均年収カーブから自動で予測します（手動の昇給率指定も可）。</div>
-      ${field('現在の年収（額面）','f_income',S.income,{sfx:'万円',req:true})}
-      ${selectField('業種','f_industry',S.industry,Object.keys(INDUSTRIES))}
-      ${selectField('年収予測の方法','f_raiseMode',S.raiseMode==='curve'?'業種別カーブで予測':'昇給率を手入力',['業種別カーブで予測','昇給率を手入力'])}
-      <div id="raiseRateWrap" style="${S.raiseMode==='curve'?'display:none':''}">
-        ${field('想定昇給率（年）','f_raiseRate',S.raiseRate,{sfx:'%'})}
-      </div>
-      ${field('退職予定年齢','f_retireAge',S.retireAge,{sfx:'歳'})}
-    </div>`;
-  }
-  else if (step===2){
-    body = `<div class="card">
-      <h2>💰 毎月の貯蓄・投資</h2>
-      <div class="hint">毎月どこにいくら入れているかを入力してください（月額・円）。</div>
-      ${field('現金貯金（普通預金など）','f_msave',S.monthlySaving,{sfx:'円/月'})}
-      ${field('NISA 積立','f_mnisa',S.monthlyNisa,{sfx:'円/月'})}
-      ${field('特定口座（課税投資）','f_mtok',S.monthlyTokutei,{sfx:'円/月'})}
-      ${field('暗号資産','f_mcrypto',S.monthlyCrypto,{sfx:'円/月'})}
-      ${field('財形貯蓄','f_zaikei',S.zaikei,{sfx:'円/月'})}
-      <h2 style="margin-top:20px;font-size:.95rem">📈 想定利回り（年率）</h2>
-      <div class="row3">
-        ${field('NISA','f_rnisa',S.retNisa,{sfx:'%'})}
-        ${field('特定口座','f_rtok',S.retTokutei,{sfx:'%'})}
-        ${field('暗号資産','f_rcrypto',S.retCrypto,{sfx:'%'})}
-      </div>
-      <label class="toggle">
-        <input type="checkbox" id="f_grow" ${S.flowGrowsWithIncome?'checked':''}>
-        <span>年収UPに比例して貯蓄・投資額も増やす（推奨）</span>
-      </label>
-    </div>`;
-  }
-  else if (step===3){
-    body = `<div class="card">
-      <h2>🛡️ 保険・固定費</h2>
-      <div class="hint">保険は種類によって資産形成への影響が変わります。</div>
-      ${field('保険料の合計','f_ins',S.insurance,{sfx:'円/月'})}
-      ${selectField('保険の種類（主なもの）','f_instype',S.insuranceType,['掛け捨て','貯蓄型','両方ある','加入なし'])}
-    </div>`;
-  }
-  else if (step===4){
-    body = `<div class="card">
-      <h2>👨‍👩‍👧 家族情報</h2>
-      <div class="hint">配偶者・子どもなど。教育費や必要保障額の参考にします（任意）。</div>
-      <div id="familyList"></div>
-      <button class="btn ghost" style="margin-top:12px" onclick="addMember()">＋ 家族を追加</button>
-    </div>`;
-  }
-  else if (step===5){
-    body = `<div class="card">
-      <h2>🎯 目標設定</h2>
-      <div class="hint">いつまでに・いくら貯めたいかを設定してください。</div>
-      <div class="row">
-        ${field('目標資産額','f_tamount',S.targetAmount,{sfx:'万円',req:true})}
-        ${field('達成したい年齢','f_tage',S.targetAge,{sfx:'歳',req:true})}
-      </div>
-      <div class="hint" style="margin-top:8px;margin-bottom:0">例：40歳までに1億円 → 10000万円 / 40歳</div>
-    </div>`;
-  }
-
-  const backBtn = step>0 ? `<button class="btn sec" onclick="prevStep()">← 戻る</button>` : '';
-  const nextLabel = step===STEPS.length-1 ? '診断する 🚀' : '次へ →';
-  el('app').innerHTML = `
-    <h1>マネープラン診断</h1>
-    <p class="subtitle">個人情報から将来資産を予測し、目標達成への道を提案します</p>
-    ${stepper()}
-    ${body}
-    <div class="btn-row">${backBtn}<button class="btn" onclick="nextStep()">${nextLabel}</button></div>
-    <div class="restart"><a onclick="resetAll()">最初からやり直す</a></div>
-  `;
-
-  if (step===1){
-    el('f_raiseMode').addEventListener('change', e=>{
-      el('raiseRateWrap').style.display = e.target.value==='業種別カーブで予測'?'none':'';
-    });
-  }
-  if (step===4) renderFamily();
-}
-
-// ---- 家族 ----
-function renderFamily(){
-  const list = el('familyList');
-  if (!list) return;
-  if (S.family.length===0){
-    list.innerHTML = `<div style="color:#64748b;font-size:.82rem">まだ登録されていません。</div>`;
-    return;
-  }
-  list.innerHTML = S.family.map((m,i)=>`
-    <div class="member">
-      <div><label style="margin-top:0">続柄</label>
-        <select data-i="${i}" data-k="rel">
-          ${['配偶者','子ども','親','その他'].map(o=>`<option ${o===m.rel?'selected':''}>${o}</option>`).join('')}
-        </select></div>
-      <div><label style="margin-top:0">性別</label>
-        <select data-i="${i}" data-k="gender">
-          ${['男性','女性'].map(o=>`<option ${o===m.gender?'selected':''}>${o}</option>`).join('')}
-        </select></div>
-      <div><label style="margin-top:0">年齢</label>
-        <input type="number" data-i="${i}" data-k="age" value="${m.age??''}"></div>
-      <button class="del" onclick="delMember(${i})">✕</button>
-    </div>`).join('');
-  list.querySelectorAll('select,input').forEach(inp=>{
-    inp.addEventListener('change', e=>{
-      const i=+e.target.dataset.i, k=e.target.dataset.k;
-      S.family[i][k] = k==='age' ? (+e.target.value||0) : e.target.value;
-      saveState(S);
-    });
-  });
-}
-function addMember(){ collectStep(); S.family.push({rel:'配偶者',gender:'女性',age:30}); render(); }
-function delMember(i){ collectStep(); S.family.splice(i,1); render(); }
-
-// ---- ステップ間のデータ収集 ----
-function collectStep(){
-  const v = id => el(id) ? el(id).value : null;
-  const num = id => { const e=el(id); return e? (parseFloat(e.value.replace(/,/g,''))||0):null; };
-  if (step===0){ S.age=num('f_age')??S.age; S.gender=v('f_gender')??S.gender; S.currentAssets=num('f_assets')??S.currentAssets; }
-  if (step===1){ S.income=num('f_income')??S.income; S.industry=v('f_industry')??S.industry;
-    S.raiseMode = v('f_raiseMode')==='昇給率を手入力'?'manual':'curve'; S.raiseRate=num('f_raiseRate')??S.raiseRate;
-    S.retireAge=num('f_retireAge')??S.retireAge; }
-  if (step===2){ S.monthlySaving=num('f_msave')??S.monthlySaving; S.monthlyNisa=num('f_mnisa')??S.monthlyNisa;
-    S.monthlyTokutei=num('f_mtok')??S.monthlyTokutei; S.monthlyCrypto=num('f_mcrypto')??S.monthlyCrypto;
-    S.zaikei=num('f_zaikei')??S.zaikei; S.retNisa=num('f_rnisa')??S.retNisa; S.retTokutei=num('f_rtok')??S.retTokutei;
-    S.retCrypto=num('f_rcrypto')??S.retCrypto; S.flowGrowsWithIncome = el('f_grow')?el('f_grow').checked:S.flowGrowsWithIncome; }
-  if (step===3){ S.insurance=num('f_ins')??S.insurance; S.insuranceType=v('f_instype')??S.insuranceType; }
-  if (step===5){ S.targetAmount=num('f_tamount')??S.targetAmount; S.targetAge=num('f_tage')??S.targetAge; }
-  saveState(S);
-}
-
-function nextStep(){ collectStep(); step++; render(); }
-function prevStep(){ collectStep(); step--; render(); }
-function resetAll(){ if(confirm('入力内容をすべて消去して最初からやり直しますか？')){ localStorage.removeItem(LS_KEY); location.reload(); } }
-
-// ============ 将来資産シミュレーション ============
+// ============ Simulation ============
 function projectIncome(age){
-  if (age > S.retireAge) return 0;
-  if (S.raiseMode==='manual'){
-    return S.income * Math.pow(1 + S.raiseRate/100, age - S.age);
-  }
-  // 業種別カーブ：現在の年収をカーブにアンカーして将来を推定
-  const cur = curveIncome(S.age, S.industry);
-  const fut = curveIncome(age, S.industry);
-  return S.income * (fut / Math.max(cur, 1));
+  if(age > S.retireAge) return 0;
+  if(S.raiseMode==='manual') return S.income * Math.pow(1+S.raiseRate/100, age-S.age);
+  const cur = curveIncome(S.age, S.industry), fut = curveIncome(age, S.industry);
+  return S.income * (fut / Math.max(cur,1));
 }
 
 function simulate(){
   const target = S.targetAmount * 1e4;
-  const endAge = Math.max(S.targetAge, S.age) + 5;
-  // 各資産バケット（円）
-  let cash = S.currentAssets*1e4;  // 初期は全額を現金扱いにせず、増分のみ各口座へ。初期資産はまとめて「現金＋運用ミックス」として平均利回りで増やす
-  // 初期資産を運用バケットへ概算配分：投資割合は月次フローの投資比率から推定
-  const flowInv = S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto;
-  const flowAll = flowInv + S.monthlySaving + S.zaikei;
-  const invRatio = flowAll>0 ? flowInv/flowAll : 0.6;
-  let invest = S.currentAssets*1e4 * invRatio;   // 運用資産
-  cash = S.currentAssets*1e4 * (1-invRatio);     // 現金・財形
+  const endAge = Math.max(S.targetAge, S.age) + 8;
+  const flowN=S.monthlyNisa, flowT=S.monthlyTokutei, flowC=S.monthlyCrypto, flowCash=S.monthlySaving+S.zaikei;
+  const flowAll = flowN+flowT+flowC+flowCash || 1;
+  // 初期資産を各バケット比率で配分
+  const init = S.currentAssets*1e4;
+  let nisa = init*(flowN/flowAll), tok = init*(flowT/flowAll);
+  let crypto = init*(flowC/flowAll), cash = init*(flowCash/flowAll);
 
-  const blendRet = flowInv>0
-    ? (S.monthlyNisa*S.retNisa + S.monthlyTokutei*S.retTokutei + S.monthlyCrypto*S.retCrypto)/flowInv
-    : 5;
-
-  const rows = [];
-  let reachAge = null;
-  for (let age=S.age; age<=endAge; age++){
-    const total = cash+invest;
-    rows.push({age, cash:Math.round(cash), invest:Math.round(invest), total:Math.round(total)});
-    if (total>=target && reachAge===null && age>=S.age) reachAge=age;
-    // 年収比でフローをスケール
-    let scale = 1;
-    if (S.flowGrowsWithIncome){
-      const inc0 = projectIncome(S.age), incN = projectIncome(age);
-      scale = inc0>0 ? Math.max(0.3, incN/inc0) : 1;
+  const rows=[], income_rows=[];
+  let reachExact=null;
+  for(let age=S.age; age<=endAge; age++){
+    const total = nisa+tok+crypto+cash;
+    rows.push({age, nisa:Math.round(nisa), tok:Math.round(tok), crypto:Math.round(crypto), cash:Math.round(cash), total:Math.round(total)});
+    income_rows.push({age, income:Math.round(projectIncome(age))});
+    if(total>=target && reachExact===null) reachExact=age;
+    // scale by income growth
+    let scale=1;
+    if(S.flowGrowsWithIncome){
+      const i0=projectIncome(S.age), iN=projectIncome(age);
+      scale = i0>0 ? Math.max(0.3,iN/i0) : 1;
     }
-    if (age>=S.retireAge) scale = 0; // 退職後は新規積立なし（簡易）
-    const yNisa=S.monthlyNisa*12*scale, yTok=S.monthlyTokutei*12*scale, yCry=S.monthlyCrypto*12*scale;
-    const yCash=S.monthlySaving*12*scale, yZai=S.zaikei*12*scale;
-    // 成長
-    invest = invest*(1+blendRet/100) + yNisa + yTok + yCry;
-    cash   = cash*(1+S.retCash/100) + yCash + yZai;
+    if(age>=S.retireAge) scale=0;
+    nisa   = nisa  *(1+S.retNisa/100)   + flowN*12*scale;
+    tok    = tok   *(1+S.retTokutei/100)+ flowT*12*scale;
+    crypto = crypto*(1+S.retCrypto/100) + flowC*12*scale;
+    cash   = cash  *(1+S.retCash/100)   + flowCash*12*scale;
   }
-  // より精密な到達月
-  let reachExact = null;
-  {
-    let c=S.currentAssets*1e4*(1-invRatio), iv=S.currentAssets*1e4*invRatio;
+  // 精密到達（月単位）
+  let reachExactFine=null;
+  { let n=init*(flowN/flowAll),t=init*(flowT/flowAll),c=init*(flowC/flowAll),ca=init*(flowCash/flowAll);
     for(let m=0;m<(endAge-S.age)*12;m++){
       const age=S.age+m/12;
-      let scale=1;
-      if(S.flowGrowsWithIncome){ const i0=projectIncome(S.age),iN=projectIncome(age); scale=i0>0?Math.max(0.3,iN/i0):1; }
-      if(age>=S.retireAge) scale=0;
-      iv = iv*(1+blendRet/100/12) + (S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto)*scale;
-      c  = c*(1+S.retCash/100/12) + (S.monthlySaving+S.zaikei)*scale;
-      if(c+iv>=target){ reachExact=age+1/12; break; }
+      let sc=1;
+      if(S.flowGrowsWithIncome){const i0=projectIncome(S.age),iN=projectIncome(age);sc=i0>0?Math.max(0.3,iN/i0):1;}
+      if(age>=S.retireAge) sc=0;
+      n=n*(1+S.retNisa/100/12)+flowN*sc; t=t*(1+S.retTokutei/100/12)+flowT*sc;
+      c=c*(1+S.retCrypto/100/12)+flowC*sc; ca=ca*(1+S.retCash/100/12)+flowCash*sc;
+      if(n+t+c+ca>=target){reachExactFine=age+1/12;break;}
     }
   }
-  return { rows, reachAge, reachExact, blendRet, invRatio, target };
+  const blendRet = (flowN*S.retNisa+flowT*S.retTokutei+flowC*S.retCrypto)/(flowN+flowT+flowC||1);
+  return {rows, income_rows, reachExact:reachExactFine, target, blendRet};
 }
 
-// ============ アドバイス生成 ============
+// ============ Advice ============
 function genAdvice(sim){
-  const A=[];
-  const onTrack = sim.reachExact!==null && sim.reachExact<=S.targetAge;
-  const target = sim.target;
-  const yearsLeft = S.targetAge - S.age;
-
-  // 財形
-  if (S.zaikei>0){
-    A.push({ic:'🔁',tag:'red',tagL:'見直し',title:'財形貯蓄は投資へ振り替え検討',
-      body:`財形貯蓄に月${fmtYen(S.zaikei)}入れていますが、金利はほぼ0%です（住宅・年金財形の非課税枠も低金利では恩恵小）。`+
-           `この資金をNISAのインデックス投資に回すと、利回り${S.retNisa}%なら長期で大きく差がつきます。`,
-      impact:`+${fmtYen(S.zaikei*12*yearsLeft*(S.retNisa/100)*yearsLeft/2)} 程度の上乗せ余地`});
-  }
-  // 貯蓄型保険
-  if (S.insuranceType==='貯蓄型' || S.insuranceType==='両方ある'){
-    A.push({ic:'🛡️',tag:'yellow',tagL:'要確認',title:'貯蓄型保険の利回りを確認',
-      body:`貯蓄型保険は手数料が高く、実質利回りが1%前後のことが多いです。保障は掛け捨て（収入保障保険など）で確保し、`+
-           `差額を投資に回すと効率的。今の保険料 月${fmtYen(S.insurance)}の内訳を一度棚卸ししましょう。`});
-  }
-  // NISA枠の活用
-  const yNisa = S.monthlyNisa*12;
-  if (yNisa < 1200000){
-    A.push({ic:'🏦',tag:'red',tagL:'優先',title:'NISAつみたて枠を埋める',
-      body:`新NISAのつみたて投資枠は年120万円（月10万円）まで非課税。現在は年${fmtYen(yNisa)}なので、`+
-           `あと月${fmtYen(Math.max(0,100000-S.monthlyNisa))}増やせます。特定口座より先にNISAを優先しましょう。`});
-  } else if (S.monthlyTokutei>0){
-    A.push({ic:'🏦',tag:'blue',tagL:'任意',title:'成長投資枠も活用',
-      body:`つみたて枠は十分です。成長投資枠（年240万円）も使い切ると、特定口座の課税（約20%）を回避できます。`});
-  }
-  // 投資を増やす（未達のとき）
-  if (!onTrack){
-    const monthlyInv = S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto;
+  const A=[]; const onTrack=sim.reachExact!==null&&sim.reachExact<=S.targetAge;
+  const target=sim.target; const yearsLeft=S.targetAge-S.age;
+  if(S.zaikei>0) A.push({ic:'🔁',tag:'red',tagL:'見直し',title:'財形貯蓄は投資へ振り替えを',
+    body:`財形に月${fmtY(S.zaikei)}。金利はほぼ0%です。この資金をNISAインデックスに回すと複利で大きく変わります。`,
+    impact:`長期で+${fmtY(S.zaikei*12*yearsLeft*S.retNisa/100*yearsLeft/2)}程度の差`});
+  if(S.insuranceType==='貯蓄型'||S.insuranceType==='両方ある') A.push({ic:'🛡️',tag:'yellow',tagL:'要確認',title:'貯蓄型保険の利回りを確認',
+    body:`貯蓄型は手数料が高く実質利回り1%前後のことが多いです。保障は掛け捨てで確保し、差額を投資に回しましょう。`});
+  if(S.monthlyNisa*12<1200000) A.push({ic:'🏦',tag:'red',tagL:'優先',title:'NISAつみたて枠を埋める',
+    body:`年間枠120万円（月10万）に対して現在月${fmtY(S.monthlyNisa)}。あと月${fmtY(Math.max(0,100000-S.monthlyNisa))}増やせます。特定口座より先に優先を。`});
+  if(!onTrack){
     const r=sim.blendRet/100/12, n=yearsLeft*12;
-    const fvFactor = n>0 ? ((Math.pow(1+r,n)-1)/r) : 1;
-    const needExtra = fvFactor>0 ? Math.max(0,(target - sim.rows[Math.min(yearsLeft,sim.rows.length-1)].total)/fvFactor) : 0;
+    const ff=n>0?((Math.pow(1+r,n)-1)/r):1;
+    const idx=Math.min(yearsLeft,sim.rows.length-1);
+    const needExtra=ff>0?Math.max(0,(target-(sim.rows[idx]?.total||0))/ff):0;
     A.push({ic:'📈',tag:'red',tagL:'優先',title:'毎月の投資額を増やす',
-      body:`現在のペースでは${S.targetAge}歳時点で目標に届かない見込みです。`+
-           `あと月${fmtYen(needExtra)}ほど投資を上乗せできれば到達ペースに乗ります。`,
-      impact:`目標 ${fmtYen(target)} 達成へ`});
+      body:`${S.targetAge}歳時点で目標に届かない見込み。あと月${fmtY(needExtra)}ほど追加投資できれば達成ペースに乗れます。`});
   }
-  // 暗号資産の比率
   const flowInv=S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto;
-  if (flowInv>0 && S.monthlyCrypto/flowInv>0.2){
-    A.push({ic:'⚠️',tag:'yellow',tagL:'リスク',title:'暗号資産の比率が高め',
-      body:`投資のうち暗号資産が${Math.round(S.monthlyCrypto/flowInv*100)}%を占めています。値動きが大きいため、`+
-           `コア資産は全世界株インデックス、暗号資産はサテライト（全体の5〜10%目安）に抑えると安定します。`});
-  }
-  // 年収アップ
-  const futInc = projectIncome(S.targetAge);
-  A.push({ic:'💼',tag:'blue',tagL:'参考',title:'年収カーブと収入アップ',
-    body:`${S.industry}の平均カーブでは、${S.targetAge}歳時点であなたの年収は約${Math.round(futInc)}万円と推定されます。`+
-         `昇進・転職・副業で収入を上げると貯蓄率が直接改善します。`});
-  // 生活防衛資金
-  if (S.currentAssets*1e4 < 3000000){
-    A.push({ic:'💧',tag:'yellow',tagL:'重要',title:'生活防衛資金の確保',
-      body:`まず生活費の6ヶ月分を現金で確保しましょう。暴落時にも投資を取り崩さずに済みます。`});
-  }
-  // 家族・教育費
-  const kids = S.family.filter(m=>m.rel==='子ども');
-  if (kids.length>0){
-    A.push({ic:'🎓',tag:'blue',tagL:'計画',title:'教育費の準備',
-      body:`お子さま${kids.length}人分の教育費は1人あたり大学まで約1,000万円が目安。`+
-           `ジュニアNISA終了後は親のNISA枠や学資準備で計画的に。資産目標とは別枠で確保を。`});
-  }
+  if(flowInv>0&&S.monthlyCrypto/flowInv>0.2) A.push({ic:'⚠️',tag:'yellow',tagL:'リスク',title:'暗号資産の比率が高め',
+    body:`投資のうち暗号資産が${Math.round(S.monthlyCrypto/flowInv*100)}%。コアは全世界株インデックス、暗号はサテライト5〜10%目安が安定します。`});
+  A.push({ic:'💼',tag:'blue',tagL:'参考',title:`${S.industry}の年収カーブ`,
+    body:`${S.industry}の平均カーブでは${S.targetAge}歳時点で年収約${Math.round(projectIncome(S.targetAge))}万円と推定。昇進・転職で年収を上げると貯蓄率が直接改善します。`});
+  if(S.currentAssets*1e4<3000000) A.push({ic:'💧',tag:'yellow',tagL:'重要',title:'生活防衛資金を先に確保',
+    body:`まず生活費6ヶ月分を現金で確保。暴落時に投資を崩さずに済みます。`});
+  const kids=S.family.filter(m=>m.rel==='子ども');
+  if(kids.length>0) A.push({ic:'🎓',tag:'blue',tagL:'計画',title:'教育費の準備',
+    body:`子ども${kids.length}人分。大学まで1人あたり約1,000万円が目安。資産目標とは別枠で計画的に準備しましょう。`});
   return A;
 }
 
-// ============ 結果画面 ============
-function renderResult(){
-  const sim = simulate();
-  const target = sim.target;
-  const onTrack = sim.reachExact!==null && sim.reachExact<=S.targetAge;
-  // 目標年齢時点の資産
-  const idx = Math.min(S.targetAge - S.age, sim.rows.length-1);
-  const atTarget = sim.rows[Math.max(0,idx)]?.total ?? 0;
-  const progress = Math.min(S.currentAssets*1e4/target*100, 100);
+// ============ Chart Helpers ============
+const COLORS = { nisa:'#6c63ff', tok:'#34d399', crypto:'#f59e0b', cash:'#94a3b8' };
+const LABELS = { nisa:'NISA', tok:'特定口座', crypto:'暗号資産', cash:'現金・財形' };
 
-  let alertHtml;
-  if (onTrack){
-    const yrs=Math.floor(sim.reachExact), mos=Math.round((sim.reachExact%1)*12);
-    alertHtml=`<div class="alert green">✅ 現在のプランで <strong>${yrs}歳${mos}ヶ月頃</strong>に目標 ${fmtYen(target)} を達成できる見込みです！</div>`;
-  } else {
-    alertHtml=`<div class="alert yellow">⚠️ 現在のプランでは ${S.targetAge}歳時点で <strong>${fmtYen(atTarget)}</strong>（目標 ${fmtYen(target)}）。下のアドバイスで差を埋めましょう。</div>`;
+function makeSVGChart(sim){
+  const rows=sim.rows, target=sim.target;
+  const W=Math.min((el('app').clientWidth||340)-44,640), H=260;
+  const PL=60,PR=14,PT=22,PB=32, cW=W-PL-PR, cH=H-PT-PB;
+  const maxV=Math.max(target*1.08,...rows.map(r=>r.total));
+  const minA=rows[0].age, maxA=rows[rows.length-1].age;
+  const xs=a=>PL+(a-minA)/(maxA-minA)*cW;
+  const ys=v=>PT+cH-(v/maxV)*cH;
+
+  // stacked area paths (bottom to top: cash, tok, crypto, nisa)
+  const stacks=['cash','tok','crypto','nisa'];
+  function stackedPts(keys){
+    return rows.map(r=>{
+      const s=keys.reduce((a,k)=>a+r[k],0);
+      return `${xs(r.age).toFixed(1)},${ys(s).toFixed(1)}`;
+    });
   }
+  function areaPath(topKeys, botKeys){
+    const top=stackedPts(topKeys);
+    const bot=botKeys.length?stackedPts(botKeys):[...rows].map(r=>`${xs(r.age).toFixed(1)},${(PT+cH).toFixed(1)}`);
+    return `M ${top.join(' L ')} L ${[...bot].reverse().join(' L ')} Z`;
+  }
+  const areas=[
+    {keys:['cash'],             bot:[],             color:COLORS.cash},
+    {keys:['cash','tok'],       bot:['cash'],        color:COLORS.tok},
+    {keys:['cash','tok','crypto'], bot:['cash','tok'], color:COLORS.crypto},
+    {keys:['cash','tok','crypto','nisa'], bot:['cash','tok','crypto'], color:COLORS.nisa},
+  ];
 
-  const advice = genAdvice(sim);
+  // grid
+  const yticks=[0,.25,.5,.75,1];
+  const grid=yticks.map(f=>{const v=maxV*f,y=ys(v).toFixed(1);
+    return `<line x1="${PL}" y1="${y}" x2="${(PL+cW).toFixed(1)}" y2="${y}" stroke="#e8edf5" stroke-width="1"/>
+      <text x="${PL-6}" y="${(+y+3.5).toFixed(1)}" class="ax" text-anchor="end">${man(v).toLocaleString()}万</text>`;}).join('');
 
-  el('app').innerHTML = `
-    <h1>あなたの資産プラン</h1>
-    <p class="subtitle">${S.age}歳・${S.industry}・年収${S.income}万円 → 目標 ${fmtYen(target)} @ ${S.targetAge}歳</p>
+  // x ticks
+  const step2=Math.ceil(rows.length/8);
+  const xticks=rows.filter((r,i)=>i%step2===0||r.age===S.targetAge).map(r=>
+    `<text x="${xs(r.age).toFixed(1)}" y="${(PT+cH+16).toFixed(1)}" class="ax" text-anchor="middle">${r.age}</text>`).join('');
+
+  // reference lines
+  const refY=ys(target).toFixed(1);
+  const tgX=xs(S.targetAge).toFixed(1);
+  const refs=`<line x1="${PL}" y1="${refY}" x2="${(PL+cW).toFixed(1)}" y2="${refY}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="${(PL+cW).toFixed(1)}" y="${(+refY-5).toFixed(1)}" class="ax" text-anchor="end" fill="#b45309" font-weight="bold">目標 ${man(target).toLocaleString()}万</text>
+    <line x1="${tgX}" y1="${PT}" x2="${tgX}" y2="${(PT+cH).toFixed(1)}" stroke="#6c63ff" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="${tgX}" y="${(PT-6).toFixed(1)}" class="ax" text-anchor="middle" fill="#6c63ff" font-weight="bold">${S.targetAge}歳</text>`;
+
+  // hit area (invisible rect for mouse/touch)
+  const hitRect=`<rect id="chartHit" x="${PL}" y="${PT}" width="${cW.toFixed(1)}" height="${cH.toFixed(1)}" fill="transparent" style="cursor:crosshair"/>`;
+
+  const paths=areas.map(a=>`<path d="${areaPath(a.keys,a.bot)}" fill="${a.color}" fill-opacity=".72"/>`).join('');
+  // total line
+  const totalLine=`<path d="M ${rows.map(r=>`${xs(r.age).toFixed(1)},${ys(r.total).toFixed(1)}`).join(' L ')}" stroke="#1a2236" stroke-width="2" fill="none"/>`;
+
+  const svg=`<svg width="${W}" height="${H}" id="assetSvg" style="overflow:visible">
+    <defs>
+      <clipPath id="cp"><rect x="${PL}" y="${PT}" width="${cW}" height="${cH}"/></clipPath>
+    </defs>
+    <g clip-path="url(#cp)">${paths}${totalLine}</g>
+    ${grid}${xticks}${refs}${hitRect}
+  </svg>`;
+
+  // Store data for tooltip
+  window._chartData={rows,xs,ys,maxV,PL,PT,cH,cW,W,minA,maxA};
+  return {svg,W,H};
+}
+
+function initChartTooltip(){
+  const hit=el('chartHit'); const tip=el('tip');
+  if(!hit||!tip) return;
+  const d=window._chartData;
+  function showTip(clientX, rect){
+    const x=clientX-rect.left;
+    const age=d.minA+(x-d.PL)/d.cW*(d.maxA-d.minA);
+    const idx=Math.max(0,Math.min(d.rows.length-1,Math.round(age-d.minA)));
+    const r=d.rows[idx];
+    if(!r) return;
+    const total=r.nisa+r.tok+r.crypto+r.cash;
+    tip.className='chart-tip show';
+    tip.innerHTML=`<strong>${r.age}歳時点</strong><br>
+      <span style="color:${COLORS.nisa}">■</span> NISA: ${fmtY(r.nisa)}<br>
+      <span style="color:${COLORS.tok}">■</span> 特定口座: ${fmtY(r.tok)}<br>
+      <span style="color:${COLORS.crypto}">■</span> 暗号資産: ${fmtY(r.crypto)}<br>
+      <span style="color:${COLORS.cash}">■</span> 現金・財形: ${fmtY(r.cash)}<br>
+      <strong>合計: ${fmtY(total)}</strong>`;
+    const svgEl=el('assetSvg');
+    const svgRect=svgEl.getBoundingClientRect();
+    const dotX=d.xs(r.age), dotY=d.ys(total);
+    let tx=svgRect.left+dotX+10; const ty=svgRect.top+dotY-20;
+    if(tx+180>window.innerWidth) tx=svgRect.left+dotX-195;
+    tip.style.left=tx+'px'; tip.style.top=ty+'px';
+  }
+  hit.addEventListener('mousemove',e=>{ showTip(e.clientX, el('assetSvg').getBoundingClientRect()); });
+  hit.addEventListener('mouseleave',()=>{ tip.className='chart-tip'; });
+  hit.addEventListener('touchmove',e=>{ e.preventDefault(); showTip(e.touches[0].clientX, el('assetSvg').getBoundingClientRect()); },{passive:false});
+  hit.addEventListener('touchend',()=>{ setTimeout(()=>{tip.className='chart-tip';},1500); });
+}
+
+function makeIncomeChart(income_rows){
+  const rows=income_rows.filter(r=>r.income>0);
+  if(!rows.length) return '<p style="color:var(--sub);font-size:.8rem">退職済みのため表示なし</p>';
+  const W=Math.min((el('app').clientWidth||340)-44,640), H=160;
+  const PL=56,PR=14,PT=16,PB=28, cW=W-PL-PR, cH=H-PT-PB;
+  const maxV=Math.max(...rows.map(r=>r.income))*1.1;
+  const barW=Math.max(2, cW/rows.length-2);
+  const xs=(_,i)=>PL+i*(cW/rows.length)+barW/2;
+  const ys=v=>PT+cH-(v/maxV)*cH;
+  const grid=[0,.5,1].map(f=>{const v=maxV*f,y=ys(v).toFixed(1);
+    return `<line x1="${PL}" y1="${y}" x2="${(PL+cW).toFixed(1)}" y2="${y}" stroke="#e8edf5"/>
+      <text x="${PL-5}" y="${(+y+3).toFixed(1)}" class="ax" text-anchor="end">${Math.round(v)}万</text>`;}).join('');
+  const curIdx=rows.findIndex(r=>r.age===S.age);
+  const bars=rows.map((r,i)=>{
+    const bh=Math.max(2,(r.income/maxV)*cH), by=PT+cH-bh;
+    const isCur=r.age===S.age;
+    const fill=isCur?'#6c63ff':`url(#incGrad)`;
+    const lbl=i%Math.ceil(rows.length/8)===0||isCur?`<text x="${xs(null,i).toFixed(1)}" y="${(PT+cH+14).toFixed(1)}" class="ax" text-anchor="middle">${r.age}</text>`:'';
+    return `<rect x="${(xs(null,i)-barW/2).toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${fill}" rx="2"/>
+      ${lbl}`;}).join('');
+  // current income line
+  const curY=rows[curIdx]?ys(rows[curIdx].income).toFixed(1):'';
+  const line=curIdx>=0?`<line x1="${PL}" y1="${curY}" x2="${(PL+cW).toFixed(1)}" y2="${curY}" stroke="#6c63ff" stroke-dasharray="4 3" stroke-width="1.2"/>
+    <text x="${(PL+4).toFixed(1)}" y="${(+curY-4).toFixed(1)}" style="font-size:9px;fill:#6c63ff">現在 ${rows[curIdx].income}万</text>`:'';
+  return `<svg width="${W}" height="${H}">
+    <defs><linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6c63ff" stop-opacity=".6"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity=".2"/>
+    </linearGradient></defs>
+    ${grid}${line}${bars}
+    <text x="${(PL+cW/2).toFixed(1)}" y="${H-2}" class="ax" text-anchor="middle">（年齢）</text>
+  </svg>`;
+}
+
+// ============ Render ============
+function render(){ S._step=step; save(S); step<STEPS.length?renderWizard():renderResult(); window.scrollTo(0,0); }
+
+function stepper(){
+  return `<div class="stepper">${STEPS.map((_,i)=>`<div class="step-dot ${i<step?'done':i===step?'active':''}"></div>`).join('')}</div>
+    <div class="step-lbl">STEP ${step+1} / ${STEPS.length}　<strong>${STEPS[step]}</strong></div>`;
+}
+
+function fld(lbl,id,val,{sfx='',type='number',ph='',req=false}={}){
+  return `<label>${lbl}${req?'<span class="req"> *</span>':''}</label>
+    <div class="input-wrap"><input type="${type}" id="${id}" value="${val??''}" placeholder="${ph}">
+    ${sfx?`<span class="sfx">${sfx}</span>`:''}</div>`;
+}
+function sel(lbl,id,val,opts){
+  return `<label>${lbl}</label><select id="${id}">${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`;
+}
+
+function renderWizard(){
+  let body='';
+  if(step===0) body=`<div class="card">
+    <h2>👤 基本情報</h2><p class="hint">まずはあなた自身について教えてください。</p>
+    <div class="row2">${fld('現在の年齢','f_age',S.age,{sfx:'歳',req:true})}${sel('性別','f_gender',S.gender,['男性','女性','その他'])}</div>
+    ${fld('現在の総資産（預金＋投資など合計）','f_assets',S.currentAssets,{sfx:'万円',req:true})}
+    <p class="hint" style="margin-top:6px;margin-bottom:0">※ マネーフォワードの「資産総額」をそのまま入れればOK</p>
+  </div>`;
+
+  else if(step===1) body=`<div class="card">
+    <h2>💼 収入・キャリア</h2><p class="hint">将来の年収は業種別の平均カーブから自動予測します。</p>
+    ${fld('現在の年収（額面）','f_income',S.income,{sfx:'万円',req:true})}
+    ${sel('業種','f_industry',S.industry,Object.keys(INDUSTRIES))}
+    ${sel('年収予測の方法','f_raiseMode',S.raiseMode==='curve'?'業種別カーブで予測':'昇給率を手入力',['業種別カーブで予測','昇給率を手入力'])}
+    <div id="raiseWrap" style="${S.raiseMode==='curve'?'display:none':''}">
+      ${fld('想定昇給率（年）','f_raiseRate',S.raiseRate,{sfx:'%'})}
+    </div>
+    ${fld('退職予定年齢','f_retireAge',S.retireAge,{sfx:'歳'})}
+  </div>`;
+
+  else if(step===2) body=`<div class="card">
+    <h2>💰 毎月の貯蓄・投資</h2><p class="hint">毎月どこにいくら入れているか（月額・円）。</p>
+    ${fld('現金貯金（普通預金など）','f_msave',S.monthlySaving,{sfx:'円/月'})}
+    ${fld('NISA 積立','f_mnisa',S.monthlyNisa,{sfx:'円/月'})}
+    ${fld('特定口座（課税投資）','f_mtok',S.monthlyTokutei,{sfx:'円/月'})}
+    ${fld('暗号資産','f_mcrypto',S.monthlyCrypto,{sfx:'円/月'})}
+    ${fld('財形貯蓄','f_zaikei',S.zaikei,{sfx:'円/月'})}
+    <h2 style="margin-top:20px;font-size:.95rem">📈 想定利回り（年率）</h2>
+    <div class="row3">
+      ${fld('NISA','f_rnisa',S.retNisa,{sfx:'%'})}
+      ${fld('特定口座','f_rtok',S.retTokutei,{sfx:'%'})}
+      ${fld('暗号資産','f_rcrypto',S.retCrypto,{sfx:'%'})}
+    </div>
+    <label class="toggle"><input type="checkbox" id="f_grow" ${S.flowGrowsWithIncome?'checked':''}>
+    <span>年収UPに比例して積立額も増やす（推奨）</span></label>
+  </div>`;
+
+  else if(step===3) body=`<div class="card">
+    <h2>🛡️ 保険・固定費</h2><p class="hint">保険は種類によって資産形成への影響が変わります。</p>
+    ${fld('保険料の合計','f_ins',S.insurance,{sfx:'円/月'})}
+    ${sel('保険の種類（主なもの）','f_instype',S.insuranceType,['掛け捨て','貯蓄型','両方ある','加入なし'])}
+  </div>`;
+
+  else if(step===4) body=`<div class="card">
+    <h2>👨‍👩‍👧 家族情報</h2><p class="hint">配偶者・子どもなど。教育費・必要保障額の参考に（任意）。</p>
+    <div id="familyList"></div>
+    <button class="btn ghost" style="margin-top:12px" onclick="addMember()">＋ 家族を追加</button>
+  </div>`;
+
+  else if(step===5) body=`<div class="card">
+    <h2>🎯 目標設定</h2><p class="hint">いつまでに・いくら貯めたいかを設定してください。</p>
+    <div class="row2">
+      ${fld('目標資産額','f_tamount',S.targetAmount,{sfx:'万円',req:true})}
+      ${fld('達成したい年齢','f_tage',S.targetAge,{sfx:'歳',req:true})}
+    </div>
+    <p class="hint" style="margin-top:8px;margin-bottom:0">例：40歳までに1億円 → 10000万円 / 40歳</p>
+  </div>`;
+
+  const back=step>0?`<button class="btn sec" onclick="prevStep()">← 戻る</button>`:'';
+  el('app').innerHTML=`
+    <div class="logo"><span class="icon">💹</span><h1>マネープラン診断</h1><p>個人情報から将来資産を予測し、目標達成への道を提案します</p></div>
+    ${stepper()}${body}
+    <div class="btn-row">${back}<button class="btn" onclick="nextStep()">${step===STEPS.length-1?'診断する 🚀':'次へ →'}</button></div>
+    <div class="restart"><a onclick="resetAll()">最初からやり直す</a></div>`;
+  if(step===1) el('f_raiseMode').addEventListener('change',e=>{
+    el('raiseWrap').style.display=e.target.value==='昇給率を手入力'?'':'none';});
+  if(step===4) renderFamily();
+}
+
+function renderFamily(){
+  const list=el('familyList'); if(!list) return;
+  if(!S.family.length){list.innerHTML=`<p style="color:var(--sub);font-size:.82rem">まだ登録されていません。</p>`;return;}
+  list.innerHTML=S.family.map((m,i)=>`<div class="member">
+    <div><label style="margin-top:0">続柄</label><select data-i="${i}" data-k="rel">
+      ${['配偶者','子ども','親','その他'].map(o=>`<option ${o===m.rel?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div><label style="margin-top:0">性別</label><select data-i="${i}" data-k="gender">
+      ${['男性','女性'].map(o=>`<option ${o===m.gender?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div><label style="margin-top:0">年齢</label><input type="number" data-i="${i}" data-k="age" value="${m.age??''}"></div>
+    <button class="del" onclick="delMember(${i})">✕</button>
+  </div>`).join('');
+  list.querySelectorAll('select,input').forEach(inp=>inp.addEventListener('change',e=>{
+    const i=+e.target.dataset.i,k=e.target.dataset.k;
+    S.family[i][k]=k==='age'?(+e.target.value||0):e.target.value; save(S);}));
+}
+function addMember(){ collectStep(); S.family.push({rel:'配偶者',gender:'女性',age:30}); render(); }
+function delMember(i){ collectStep(); S.family.splice(i,1); render(); }
+
+function collectStep(){
+  const num=id=>{const e=el(id);return e?(parseFloat(e.value.replace(/,/g,''))||0):null;};
+  const v=id=>{const e=el(id);return e?e.value:null;};
+  if(step===0){S.age=num('f_age')??S.age;S.gender=v('f_gender')??S.gender;S.currentAssets=num('f_assets')??S.currentAssets;}
+  if(step===1){S.income=num('f_income')??S.income;S.industry=v('f_industry')??S.industry;
+    S.raiseMode=v('f_raiseMode')==='昇給率を手入力'?'manual':'curve';S.raiseRate=num('f_raiseRate')??S.raiseRate;
+    S.retireAge=num('f_retireAge')??S.retireAge;}
+  if(step===2){S.monthlySaving=num('f_msave')??S.monthlySaving;S.monthlyNisa=num('f_mnisa')??S.monthlyNisa;
+    S.monthlyTokutei=num('f_mtok')??S.monthlyTokutei;S.monthlyCrypto=num('f_mcrypto')??S.monthlyCrypto;
+    S.zaikei=num('f_zaikei')??S.zaikei;S.retNisa=num('f_rnisa')??S.retNisa;S.retTokutei=num('f_rtok')??S.retTokutei;
+    S.retCrypto=num('f_rcrypto')??S.retCrypto;S.flowGrowsWithIncome=el('f_grow')?el('f_grow').checked:S.flowGrowsWithIncome;}
+  if(step===3){S.insurance=num('f_ins')??S.insurance;S.insuranceType=v('f_instype')??S.insuranceType;}
+  if(step===5){S.targetAmount=num('f_tamount')??S.targetAmount;S.targetAge=num('f_tage')??S.targetAge;}
+  save(S);
+}
+function nextStep(){ collectStep(); step++; render(); }
+function prevStep(){ collectStep(); step--; render(); }
+function resetAll(){ if(confirm('入力内容をすべて消去して最初からやり直しますか？')){localStorage.removeItem(LS);location.reload();} }
+
+// ============ Result ============
+function renderResult(){
+  const sim=simulate();
+  const target=sim.target, onTrack=sim.reachExact!==null&&sim.reachExact<=S.targetAge;
+  const idx=Math.min(S.targetAge-S.age, sim.rows.length-1);
+  const atTarget=sim.rows[Math.max(0,idx)]?.total??0;
+  const progress=Math.min(S.currentAssets*1e4/target*100,100);
+  const advice=genAdvice(sim);
+  const {svg:chartSVG}=makeSVGChart(sim);
+  const incomeChartSVG=makeIncomeChart(sim.income_rows);
+
+  const alertHtml=onTrack
+    ?`<div class="alert green">✅ 現在のプランで <strong>${Math.floor(sim.reachExact)}歳${Math.round((sim.reachExact%1)*12)}ヶ月頃</strong>に目標 ${fmtY(target)} を達成見込みです！</div>`
+    :`<div class="alert yellow">⚠️ ${S.targetAge}歳時点で <strong>${fmtY(atTarget)}</strong>（目標 ${fmtY(target)}）。下のアドバイスで差を縮めましょう。</div>`;
+
+  let reachTxt=sim.reachExact?`${Math.floor(sim.reachExact)}歳${Math.round((sim.reachExact%1)*12)}ヶ月`:'未達';
+  el('app').innerHTML=`
+    <div class="logo"><span class="icon">💹</span><h1>あなたの資産プラン</h1>
+      <p>${S.age}歳・${S.industry}・年収${S.income}万円 → 目標 ${fmtY(target)} @ ${S.targetAge}歳</p></div>
     ${alertHtml}
     <div class="stat-grid">
-      <div class="stat blue"><div class="lbl">現在の総資産</div><div class="val">${fmtYen(S.currentAssets*1e4)}</div><div class="sub">達成率 ${progress.toFixed(1)}%</div></div>
-      <div class="stat ${onTrack?'green':'yellow'}"><div class="lbl">${S.targetAge}歳時点の予測</div><div class="val" style="font-size:1.3rem">${fmtYen(atTarget)}</div><div class="sub">目標 ${fmtYen(target)}</div></div>
-      <div class="stat ${onTrack?'green':'red'}"><div class="lbl">目標達成予測</div><div class="val" style="font-size:1.2rem">${sim.reachExact?Math.floor(sim.reachExact)+'歳'+Math.round((sim.reachExact%1)*12)+'ヶ月':'未達'}</div><div class="sub">${S.targetAge-S.age}年計画</div></div>
-      <div class="stat"><div class="lbl">月の投資額</div><div class="val" style="font-size:1.2rem">${fmtYen(S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto)}</div><div class="sub">想定利回り ${sim.blendRet.toFixed(1)}%</div></div>
+      <div class="stat accent"><div class="lbl">現在の総資産</div><div class="val">${fmtY(S.currentAssets*1e4)}</div><div class="sub">達成率 ${progress.toFixed(1)}%</div></div>
+      <div class="stat ${onTrack?'green':'yellow'}"><div class="lbl">${S.targetAge}歳時点の予測</div><div class="val">${fmtY(atTarget)}</div><div class="sub">目標 ${fmtY(target)}</div></div>
+      <div class="stat ${onTrack?'green':'red'}"><div class="lbl">目標達成予測</div><div class="val" style="font-size:1.15rem">${reachTxt}</div><div class="sub">${S.targetAge-S.age}年計画</div></div>
+      <div class="stat"><div class="lbl">月の投資合計</div><div class="val" style="font-size:1.15rem">${fmtY(S.monthlyNisa+S.monthlyTokutei+S.monthlyCrypto)}</div><div class="sub">想定利回り ${sim.blendRet.toFixed(1)}%</div></div>
     </div>
 
     <div class="card">
-      <h2>目標達成進捗</h2>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${progress}%"></div></div>
-      <div class="bar-labels"><span>0</span><span style="color:#60a5fa;font-weight:600">${fmtYen(S.currentAssets*1e4)}</span><span>${fmtYen(target)}</span></div>
+      <div class="sec-title">1億円達成進捗</div>
+      <div class="prog-wrap"><div class="prog-fill" style="width:${progress}%"></div></div>
+      <div class="prog-lbls"><span>0</span><span style="color:var(--accent);font-weight:700">${fmtY(S.currentAssets*1e4)}</span><span>${fmtY(target)}</span></div>
     </div>
 
     <div class="card">
-      <h2>📈 将来資産シミュレーション</h2>
-      <div class="hint">年収カーブ・貯蓄・投資・利回りをもとにした予測です。</div>
-      <div class="chart-wrap" id="chart"></div>
+      <div class="sec-title">📈 将来資産シミュレーション</div>
+      <p class="hint" style="margin-top:0">グラフにカーソル（またはタッチ）で各年齢の内訳を確認できます。</p>
+      <div class="legend">
+        ${Object.entries(COLORS).map(([k,c])=>`<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${LABELS[k]}</div>`).join('')}
+        <div class="legend-item"><div class="legend-dot" style="background:#1a2236"></div>合計</div>
+      </div>
+      <div class="chart-wrap" id="assetChartWrap">${chartSVG}</div>
     </div>
 
     <div class="card">
-      <h2>💡 目標達成へのアドバイス</h2>
+      <div class="sec-title">💴 年収予測（${S.industry}・業種別カーブ）</div>
+      <p class="hint" style="margin-top:0">現在の年収をアンカーに、業種平均の成長カーブで将来を予測しています。</p>
+      <div class="chart-wrap">${incomeChartSVG}</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">💡 目標達成へのアドバイス</div>
       ${advice.map(a=>`<div class="advice"><div class="ic">${a.ic}</div><div>
         <h3><span class="tag ${a.tag}">${a.tagL}</span>${a.title}</h3>
         <p>${a.body}</p>${a.impact?`<div class="impact">▲ ${a.impact}</div>`:''}
@@ -563,48 +602,9 @@ function renderResult(){
 
     <div class="btn-row">
       <button class="btn sec" onclick="step=${STEPS.length-1};render()">← 設定を調整</button>
-      <button class="btn ghost" onclick="step=0;render()">最初から見直す</button>
-    </div>
-  `;
-  drawChart(sim, target);
-}
-
-function drawChart(sim, target){
-  const rows = sim.rows;
-  const W=Math.min((el('app').clientWidth||340)-44, 640), H=240;
-  const PL=64,PR=16,PT=18,PB=30, cW=W-PL-PR, cH=H-PT-PB;
-  const maxV=Math.max(target*1.1,...rows.map(r=>r.total));
-  const minA=rows[0].age, maxA=rows[rows.length-1].age;
-  const xs=a=>PL+(a-minA)/(maxA-minA)*cW, ys=v=>PT+cH-(v/maxV)*cH;
-  const totalPts=rows.map(r=>`${xs(r.age).toFixed(1)},${ys(r.total).toFixed(1)}`);
-  const investPts=rows.map(r=>`${xs(r.age).toFixed(1)},${ys(r.invest).toFixed(1)}`);
-  const linePath='M '+totalPts.join(' L ');
-  const areaPath=linePath+` L ${xs(maxA).toFixed(1)},${(PT+cH).toFixed(1)} L ${xs(minA).toFixed(1)},${(PT+cH).toFixed(1)} Z`;
-  const investArea='M '+investPts.join(' L ')+` L ${xs(maxA).toFixed(1)},${(PT+cH).toFixed(1)} L ${xs(minA).toFixed(1)},${(PT+cH).toFixed(1)} Z`;
-  const grid=[0,.25,.5,.75,1].map(f=>{const v=maxV*f,y=ys(v);
-    return `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${(PL+cW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#1e293b"/>
-      <text x="${PL-6}" y="${(y+3).toFixed(1)}" class="ax" text-anchor="end">${man(v).toLocaleString()}万</text>`;}).join('');
-  const ticks=rows.filter((r,i)=>i%Math.ceil(rows.length/8)===0||r.age===S.targetAge).map(r=>
-    `<text x="${xs(r.age).toFixed(1)}" y="${(PT+cH+16).toFixed(1)}" class="ax" text-anchor="middle">${r.age}</text>`).join('');
-  const refY=ys(target);
-  const ref=`<line x1="${PL}" y1="${refY.toFixed(1)}" x2="${(PL+cW).toFixed(1)}" y2="${refY.toFixed(1)}" stroke="#f59e0b" stroke-dasharray="5 3"/>
-    <text x="${PL+cW}" y="${(refY-4).toFixed(1)}" class="ax" text-anchor="end" fill="#f59e0b">目標 ${man(target).toLocaleString()}万</text>`;
-  const tgx=xs(S.targetAge);
-  const tgline=`<line x1="${tgx.toFixed(1)}" y1="${PT}" x2="${tgx.toFixed(1)}" y2="${(PT+cH).toFixed(1)}" stroke="#a78bfa" stroke-dasharray="4 3"/>
-    <text x="${tgx.toFixed(1)}" y="${PT-4}" class="ax" text-anchor="middle" fill="#a78bfa">${S.targetAge}歳</text>`;
-  el('chart').innerHTML=`<svg class="chart" width="${W}" height="${H}">
-    <defs>
-      <linearGradient id="gT" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".30"/><stop offset="100%" stop-color="#3b82f6" stop-opacity=".02"/></linearGradient>
-      <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a78bfa" stop-opacity=".25"/><stop offset="100%" stop-color="#a78bfa" stop-opacity=".02"/></linearGradient>
-    </defs>
-    ${grid}${ref}${tgline}
-    <path d="${areaPath}" fill="url(#gT)"/>
-    <path d="${investArea}" fill="url(#gI)"/>
-    <path d="${linePath}" stroke="#3b82f6" stroke-width="2.5" fill="none"/>
-    <path d="M ${investPts.join(' L ')}" stroke="#a78bfa" stroke-width="1.8" fill="none" stroke-dasharray="3 2"/>
-    ${ticks}
-    <text x="${PL}" y="${H-2}" class="ax">— 総資産　--- 運用資産　（横軸：歳）</text>
-  </svg>`;
+      <button class="btn ghost" onclick="step=0;render()">最初から</button>
+    </div>`;
+  initChartTooltip();
 }
 
 render();
