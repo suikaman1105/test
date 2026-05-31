@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>資産管理 - 40歳1億円ロードマップ</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -16,761 +12,574 @@
       color: #e2e8f0;
       min-height: 100vh;
     }
-    #root { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+    #app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .header h1 {
-      font-size: 2rem;
+    h1 {
+      font-size: 1.8rem;
       font-weight: 700;
+      text-align: center;
+      margin-bottom: 6px;
       background: linear-gradient(135deg, #60a5fa, #a78bfa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      background-clip: text;
     }
-    .header p { color: #94a3b8; font-size: 0.95rem; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 28px; }
 
     .card {
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
+      padding: 20px;
+      margin-bottom: 18px;
     }
-    .card h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #60a5fa;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .card h2 { font-size: 1rem; font-weight: 600; color: #60a5fa; margin-bottom: 14px; }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-    @media (max-width: 768px) {
-      .grid-2 { grid-template-columns: 1fr; }
-      .grid-3 { grid-template-columns: 1fr 1fr; }
-    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    @media(max-width:700px){ .grid2{grid-template-columns:1fr;} .grid3{grid-template-columns:1fr 1fr;} }
 
-    .stat-card {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-    }
-    .stat-card .label { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
-    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; }
-    .stat-card .sub { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
-    .stat-card.highlight { border-color: #60a5fa; background: #1e3a5f; }
-    .stat-card.highlight .value { color: #60a5fa; }
-    .stat-card.warning .value { color: #f59e0b; }
-    .stat-card.success .value { color: #34d399; }
-    .stat-card.danger .value { color: #f87171; }
-
-    textarea {
-      width: 100%;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: #e2e8f0;
-      padding: 12px;
-      font-size: 0.85rem;
-      font-family: monospace;
-      resize: vertical;
-      min-height: 120px;
-      transition: border-color 0.2s;
-    }
-    textarea:focus { outline: none; border-color: #60a5fa; }
-    textarea::placeholder { color: #475569; }
-
-    input[type="number"], input[type="text"] {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: #e2e8f0;
-      padding: 10px 14px;
-      font-size: 0.9rem;
-      width: 100%;
-      transition: border-color 0.2s;
-    }
-    input:focus { outline: none; border-color: #60a5fa; }
-
-    label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 6px; margin-top: 14px; }
+    label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; margin-top: 12px; }
     label:first-child { margin-top: 0; }
+    input, textarea {
+      width: 100%; background: #0f172a; border: 1px solid #334155;
+      border-radius: 8px; color: #e2e8f0; padding: 10px 12px;
+      font-size: 0.88rem; transition: border-color .2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #60a5fa; }
+    textarea { font-family: monospace; resize: vertical; min-height: 110px; }
 
-    button {
+    .btn {
       background: linear-gradient(135deg, #3b82f6, #7c3aed);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 28px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      margin-top: 16px;
+      color: #fff; border: none; border-radius: 8px;
+      padding: 12px 28px; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: opacity .2s;
     }
-    button:hover { opacity: 0.9; }
-    button:active { transform: scale(0.98); }
-    button.secondary {
-      background: #334155;
-      font-size: 0.85rem;
-      padding: 8px 16px;
-      margin-top: 8px;
+    .btn:hover { opacity: .88; }
+    .btn.sec {
+      background: #334155; font-size: 0.84rem;
+      padding: 9px 18px;
     }
+    .btn-row { display: flex; gap: 12px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 
-    .progress-bar {
-      background: #0f172a;
-      border-radius: 999px;
-      height: 12px;
-      overflow: hidden;
-      margin: 8px 0;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #3b82f6, #7c3aed);
-      transition: width 0.6s ease;
-    }
+    .stat { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 14px; text-align: center; }
+    .stat .lbl { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; }
+    .stat .val { font-size: 1.4rem; font-weight: 700; }
+    .stat .sub { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
+    .stat.blue { border-color: #3b82f6; background: #1e3a5f; }
+    .stat.blue .val { color: #60a5fa; }
+    .stat.green .val { color: #34d399; }
+    .stat.yellow .val { color: #fbbf24; }
+    .stat.red .val { color: #f87171; }
 
-    .milestone {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 14px 0;
-      border-bottom: 1px solid #1e293b;
-    }
-    .milestone:last-child { border-bottom: none; }
-    .milestone-year {
-      background: #1e3a5f;
-      border: 1px solid #3b82f6;
-      color: #60a5fa;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      white-space: nowrap;
-      min-width: 60px;
-      text-align: center;
-    }
-    .milestone-content h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
-    .milestone-content p { font-size: 0.8rem; color: #94a3b8; line-height: 1.5; }
+    .bar-wrap { background: #0f172a; border-radius: 999px; height: 12px; overflow: hidden; margin: 8px 0; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#3b82f6,#7c3aed); transition: width .7s; }
+    .bar-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: #64748b; }
 
-    .advice-item {
-      display: flex;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid #1e293b;
-    }
-    .advice-item:last-child { border-bottom: none; }
-    .advice-icon { font-size: 1.4rem; flex-shrink: 0; }
-    .advice-content h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
-    .advice-content p { font-size: 0.8rem; color: #94a3b8; line-height: 1.5; }
+    .alert { border-radius: 8px; padding: 11px 15px; margin-bottom: 14px; font-size: 0.84rem; line-height: 1.5; }
+    .alert.green { background: #064e3b; border-left: 3px solid #34d399; }
+    .alert.yellow { background: #451a03; border-left: 3px solid #f59e0b; }
+    .alert.blue { background: #1e3a5f; border-left: 3px solid #3b82f6; }
 
-    .tag {
-      display: inline-block;
-      background: #1e3a5f;
-      color: #60a5fa;
-      border-radius: 999px;
-      padding: 2px 10px;
-      font-size: 0.75rem;
-      margin-right: 6px;
-      margin-bottom: 4px;
-    }
-    .tag.green { background: #064e3b; color: #34d399; }
-    .tag.yellow { background: #451a03; color: #fbbf24; }
-    .tag.red { background: #450a0a; color: #f87171; }
-
-    .section-title {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #64748b;
-      margin-bottom: 12px;
-    }
-
-    .tab-bar {
-      display: flex;
-      gap: 4px;
-      background: #0f172a;
-      border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 24px;
-    }
-    .tab {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-      color: #64748b;
-      user-select: none;
-    }
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; background: #0f172a; border-radius: 10px; padding: 4px; margin-bottom: 18px; }
+    .tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 7px; font-size: 0.82rem; font-weight: 500; cursor: pointer; color: #64748b; user-select: none; transition: background .2s; }
     .tab.active { background: #1e293b; color: #e2e8f0; }
 
-    .chart-container { width: 100%; height: 260px; }
+    /* Chart */
+    .chart-wrap { width: 100%; overflow-x: auto; }
+    svg.chart { display: block; }
+    .chart-axis { font-size: 11px; fill: #94a3b8; }
+    .chart-grid { stroke: #1e293b; stroke-width: 1; }
+    .chart-line { stroke: #3b82f6; stroke-width: 2.5; fill: none; }
+    .chart-area { fill: url(#areaGrad); }
+    .chart-ref { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 6 3; fill: none; }
+    .chart-ref-green { stroke: #34d399; stroke-width: 1.5; stroke-dasharray: 6 3; fill: none; }
 
-    .empty-state {
-      text-align: center;
-      color: #475569;
-      padding: 40px 20px;
-    }
-    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
-    .empty-state p { font-size: 0.9rem; }
+    /* Milestones */
+    .milestone { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #1e293b; }
+    .milestone:last-child { border-bottom: none; }
+    .ms-year { background: #1e3a5f; border: 1px solid #3b82f6; color: #60a5fa; border-radius: 8px; padding: 5px 10px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; min-width: 52px; text-align: center; }
+    .ms-body h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+    .ms-body p { font-size: 0.78rem; color: #94a3b8; line-height: 1.5; }
 
-    .alert {
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 12px;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-    .alert.info { background: #1e3a5f; border-left: 3px solid #3b82f6; }
-    .alert.warn { background: #451a03; border-left: 3px solid #f59e0b; }
-    .alert.success { background: #064e3b; border-left: 3px solid #34d399; }
+    /* Advice */
+    .advice { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1e293b; }
+    .advice:last-child { border-bottom: none; }
+    .advice-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .advice-body h3 { font-size: 0.88rem; font-weight: 600; margin-bottom: 3px; }
+    .advice-body p { font-size: 0.78rem; color: #94a3b8; line-height: 1.5; }
 
-    .holding-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #1e293b;
-      font-size: 0.85rem;
-    }
-    .holding-row:last-child { border-bottom: none; }
-    .holding-name { color: #e2e8f0; font-weight: 500; }
-    .holding-amount { color: #60a5fa; font-weight: 600; }
-    .holding-gain.pos { color: #34d399; }
-    .holding-gain.neg { color: #f87171; }
+    .tag { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 0.72rem; margin-right: 5px; }
+    .tag.red { background: #450a0a; color: #f87171; }
+    .tag.yellow { background: #451a03; color: #fbbf24; }
+    .tag.blue { background: #1e3a5f; color: #60a5fa; }
+    .tag.green { background: #064e3b; color: #34d399; }
+
+    /* Holdings */
+    .holding { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #1e293b; font-size: 0.84rem; }
+    .holding:last-child { border-bottom: none; }
+    .holding-name { color: #e2e8f0; }
+    .holding-amt { color: #60a5fa; font-weight: 600; }
+
+    .empty { text-align: center; color: #475569; padding: 32px; }
+    .empty div { font-size: 2.5rem; margin-bottom: 10px; }
+
+    #page-input { display: block; }
+    #page-dashboard { display: none; }
   </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="app">
+  <h1>資産管理 × 40歳1億円ロードマップ</h1>
+  <p class="subtitle">楽天証券・マネーフォワードのデータを貼り付けて、あなた専用の資産計画を生成します</p>
 
-<script type="text/babel">
-const { useState, useMemo, useCallback } = React;
-const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Area, AreaChart, Legend } = Recharts;
+  <!-- ===== INPUT PAGE ===== -->
+  <div id="page-input">
+    <div class="card">
+      <h2>⚙️ 基本設定</h2>
+      <div class="grid2">
+        <div>
+          <label>現在の年齢</label>
+          <input type="number" id="inp-age" value="32" min="20" max="39">
+          <label>月間貯蓄・投資額（円）</label>
+          <input type="number" id="inp-monthly" value="100000" step="10000">
+        </div>
+        <div>
+          <label>想定年間利回り（%）</label>
+          <input type="number" id="inp-return" value="5" step="0.5" min="0" max="20">
+          <label>現在の総資産（万円）※下のデータ貼り付け時は不要</label>
+          <input type="text" id="inp-assets" placeholder="例: 500（万円で入力）">
+        </div>
+      </div>
+    </div>
 
-// ---- Parsers ----
-function parseMoneyForward(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const result = { total: 0, categories: [], monthly: { income: 0, expense: 0, saving: 0 } };
-
-  // Try to find total asset line
-  for (const line of lines) {
-    const totalMatch = line.match(/総資産[^\d]*([\d,]+)/);
-    if (totalMatch) {
-      result.total = parseInt(totalMatch[1].replace(/,/g, ''));
-    }
-    const cashMatch = line.match(/現金[^\d]*([\d,]+)/);
-    if (cashMatch) {
-      result.categories.push({ name: '現金・預金', amount: parseInt(cashMatch[1].replace(/,/g, '')) });
-    }
-    const incomeMatch = line.match(/収入[^\d]*([\d,]+)/);
-    if (incomeMatch) {
-      result.monthly.income = parseInt(incomeMatch[1].replace(/,/g, ''));
-    }
-    const expenseMatch = line.match(/支出[^\d]*([\d,]+)/);
-    if (expenseMatch) {
-      result.monthly.expense = parseInt(expenseMatch[1].replace(/,/g, ''));
-    }
-  }
-
-  // Fallback: look for any yen amounts
-  if (result.total === 0) {
-    const amounts = [];
-    for (const line of lines) {
-      const m = line.match(/([\d,]+)\s*円/g);
-      if (m) {
-        m.forEach(a => {
-          const v = parseInt(a.replace(/[,円]/g, ''));
-          if (v > 10000) amounts.push(v);
-        });
-      }
-    }
-    if (amounts.length > 0) result.total = Math.max(...amounts);
-  }
-
-  result.monthly.saving = result.monthly.income - result.monthly.expense;
-  return result;
-}
-
-function parseRakuten(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const holdings = [];
-  let totalAsset = 0;
-  let gainLoss = 0;
-
-  for (const line of lines) {
-    // Pattern: fund/stock name + amount + gain/loss
-    const holdingMatch = line.match(/(.+?)\s+([\d,]+)\s*(円|口|株)?.*?([+-]?[\d,]+)\s*(円)?/);
-    const totalMatch = line.match(/(?:評価額合計|保有資産合計|合計)[^\d]*([\d,]+)/);
-    const gainMatch = line.match(/(?:損益合計|損益)[^\d]*([+-]?[\d,]+)/);
-
-    if (totalMatch) {
-      totalAsset = parseInt(totalMatch[1].replace(/,/g, ''));
-    }
-    if (gainMatch) {
-      gainLoss = parseInt(gainMatch[1].replace(/,/g, ''));
-    }
-    if (holdingMatch && !totalMatch && !gainMatch && line.length < 200) {
-      const amt = parseInt(holdingMatch[2].replace(/,/g, ''));
-      if (amt > 1000) {
-        holdings.push({
-          name: holdingMatch[1].substring(0, 30),
-          amount: amt,
-          gain: 0
-        });
-      }
-    }
-  }
-
-  return { totalAsset, gainLoss, holdings: holdings.slice(0, 10) };
-}
-
-function formatYen(n) {
-  if (n >= 100000000) return `${(n / 100000000).toFixed(2)}億円`;
-  if (n >= 10000) return `${Math.round(n / 10000).toLocaleString()}万円`;
-  return `${n.toLocaleString()}円`;
-}
-
-function formatM(n) {
-  return `${Math.round(n / 10000).toLocaleString()}万`;
-}
-
-// ---- Roadmap Calculation ----
-function calcRoadmap(currentAge, currentAssets, monthlySaving, annualReturn) {
-  const TARGET = 100000000;
-  const r = annualReturn / 100 / 12;
-  const data = [];
-  let assets = currentAssets;
-
-  for (let age = currentAge; age <= 45; age++) {
-    for (let m = 0; m < 12; m++) {
-      assets = assets * (1 + r) + monthlySaving;
-    }
-    data.push({ age, assets: Math.round(assets), target: age === 40 ? TARGET : null });
-    if (age >= 44 && assets >= TARGET) break;
-  }
-
-  // Find when 100M is reached
-  let reachAge = null;
-  let tempAssets = currentAssets;
-  for (let month = 0; month < 360; month++) {
-    tempAssets = tempAssets * (1 + r) + monthlySaving;
-    if (tempAssets >= TARGET) {
-      reachAge = currentAge + month / 12;
-      break;
-    }
-  }
-
-  return { data, reachAge };
-}
-
-function generateAdvice(currentAssets, monthlySaving, annualReturn, currentAge, reachAge) {
-  const advice = [];
-  const TARGET = 100000000;
-  const yearsLeft = 40 - currentAge;
-  const gap = TARGET - currentAssets;
-
-  if (reachAge === null || reachAge > 40) {
-    const neededMonthly = Math.round(
-      (TARGET - currentAssets * Math.pow(1 + annualReturn/100, yearsLeft)) /
-      (((Math.pow(1 + annualReturn/100/12, yearsLeft * 12) - 1) / (annualReturn/100/12)))
-    );
-
-    advice.push({
-      icon: '💰',
-      title: '月間貯蓄額を増やす',
-      body: `現在の月${formatYen(monthlySaving)}から増額が必要です。計算上、月${formatYen(Math.max(0, neededMonthly))}程度が目安。固定費（保険・サブスク・通信費）の見直しから始めましょう。`,
-      priority: 'high'
-    });
-  }
-
-  if (annualReturn < 5) {
-    advice.push({
-      icon: '📈',
-      title: '運用利回りを高める',
-      body: `現在の想定利回り${annualReturn}%は保守的です。全世界株式インデックスファンド（VT, eMAXIS Slim全世界株式等）の長期投資で歴史的に年5-7%の実績があります。`,
-      priority: 'medium'
-    });
-  }
-
-  advice.push({
-    icon: '🏦',
-    title: 'NISA・iDeCoを最大活用',
-    body: '新NISAは年360万円（成長投資枠240万+つみたて枠120万）が非課税。iDeCoは掛金全額が所得控除。この2つを先に埋めてから課税口座を使いましょう。',
-    priority: 'high'
-  });
-
-  if (currentAssets < 10000000) {
-    advice.push({
-      icon: '🛡️',
-      title: '生活防衛資金を確保',
-      body: '投資の前に生活費6ヶ月分を現金で確保。これがセーフティネットとなり、暴落時も投資を継続できます。',
-      priority: 'medium'
-    });
-  }
-
-  advice.push({
-    icon: '💼',
-    title: '収入源を複数持つ',
-    body: '副業・フリーランス・投資収益など複数の収入源を持つことで、貯蓄率を高められます。30代は本業スキルを活かした副業が最も効率的です。',
-    priority: 'low'
-  });
-
-  advice.push({
-    icon: '📊',
-    title: 'ポートフォリオの分散',
-    body: '国内株・米国株・先進国株・債券・REIT等に分散。年齢的にはリスク資産80-90%でも許容範囲内。定期的なリバランス（年1-2回）を忘れずに。',
-    priority: 'medium'
-  });
-
-  return advice;
-}
-
-// ---- Components ----
-function InputSection({ onAnalyze }) {
-  const [mfText, setMfText] = useState('');
-  const [rakutenText, setRakutenText] = useState('');
-  const [age, setAge] = useState(32);
-  const [monthlySaving, setMonthlySaving] = useState(100000);
-  const [annualReturn, setAnnualReturn] = useState(5);
-  const [manualAssets, setManualAssets] = useState('');
-
-  const handleSample = () => {
-    setMfText(`総資産 3,250,000円
+    <div class="grid2">
+      <div class="card">
+        <h2>📊 マネーフォワードのデータ</h2>
+        <p style="font-size:.78rem;color:#64748b;margin-bottom:10px">資産・家計画面のテキストをコピー＆ペースト</p>
+        <textarea id="inp-mf" placeholder="例：
+総資産 3,250,000円
 現金・預金 1,200,000円
 収入 420,000円
 支出 280,000円
-投資信託 2,050,000円`);
-    setRakutenText(`eMAXIS Slim 全世界株式 1,200,000円
+投資信託 2,050,000円"></textarea>
+      </div>
+      <div class="card">
+        <h2>📈 楽天証券のデータ</h2>
+        <p style="font-size:.78rem;color:#64748b;margin-bottom:10px">保有商品・資産合計画面からコピー＆ペースト</p>
+        <textarea id="inp-rakuten" placeholder="例：
+eMAXIS Slim 全世界株式 1,200,000円
+S&P500 600,000円
+評価額合計 2,050,000円
+損益合計 +180,000円"></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn sec" onclick="loadSample()">📋 サンプルデータで試す</button>
+      <button class="btn" onclick="analyze()">🚀 分析・ロードマップ生成</button>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD PAGE ===== -->
+  <div id="page-dashboard">
+    <div id="dash-alert"></div>
+
+    <div class="grid3" id="stats-grid"></div>
+
+    <div class="card">
+      <div style="font-size:.75rem;color:#64748b;margin-bottom:4px">1億円達成進捗</div>
+      <div class="bar-wrap"><div class="bar-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="bar-labels"><span>0円</span><span id="progress-cur" style="color:#60a5fa;font-weight:600"></span><span>1億円</span></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('roadmap',this)">📈 資産推移</div>
+      <div class="tab" onclick="showTab('milestones',this)">🗓 マイルストーン</div>
+      <div class="tab" onclick="showTab('advice',this)">💡 アドバイス</div>
+      <div class="tab" onclick="showTab('holdings',this)">💼 保有資産</div>
+    </div>
+
+    <div id="tab-roadmap" class="card">
+      <h2>📈 資産推移シミュレーション</h2>
+      <div class="chart-wrap" id="chart-container"></div>
+      <div class="alert blue" style="margin-top:14px" id="chart-note"></div>
+    </div>
+    <div id="tab-milestones" class="card" style="display:none">
+      <h2>🗓 マイルストーン</h2>
+      <div id="milestones-content"></div>
+    </div>
+    <div id="tab-advice" class="card" style="display:none">
+      <h2>💡 個別アドバイス</h2>
+      <div id="advice-content"></div>
+    </div>
+    <div id="tab-holdings" class="card" style="display:none">
+      <h2>💼 保有資産（楽天証券）</h2>
+      <div id="holdings-content"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn sec" onclick="goBack()">← 再入力</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Helpers ----
+const TARGET = 100000000;
+
+function fmt(n) {
+  if (n >= 100000000) return (n / 100000000).toFixed(2) + '億円';
+  if (n >= 10000) return Math.round(n / 10000).toLocaleString() + '万円';
+  return n.toLocaleString() + '円';
+}
+function fmtM(n) { return Math.round(n / 10000).toLocaleString() + '万'; }
+
+function parseNum(s) { return parseInt(s.replace(/[,円+]/g, '')) || 0; }
+
+// ---- Parsers ----
+function parseMF(text) {
+  const res = { total: 0, income: 0, expense: 0 };
+  const lines = text.split('\n');
+  for (const l of lines) {
+    let m;
+    if ((m = l.match(/総資産[^\d]*([\d,]+)/))) res.total = parseNum(m[1]);
+    if ((m = l.match(/収入[^\d]*([\d,]+)/))) res.income = parseNum(m[1]);
+    if ((m = l.match(/支出[^\d]*([\d,]+)/))) res.expense = parseNum(m[1]);
+  }
+  // fallback: largest yen number
+  if (!res.total) {
+    const nums = [...text.matchAll(/([\d,]+)円/g)].map(m => parseNum(m[1])).filter(v => v > 10000);
+    if (nums.length) res.total = Math.max(...nums);
+  }
+  return res;
+}
+
+function parseRakuten(text) {
+  const res = { total: 0, gain: 0, holdings: [] };
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const l of lines) {
+    let m;
+    if ((m = l.match(/(?:評価額合計|保有資産合計|合計)[^\d]*([\d,]+)/))) { res.total = parseNum(m[1]); continue; }
+    if ((m = l.match(/(?:損益合計|損益)[^\d]*([+-]?[\d,]+)/))) { res.gain = parseNum(m[1]); continue; }
+    // holding lines: "name  amount円"
+    if ((m = l.match(/^(.+?)\s+([\d,]+)\s*円/))) {
+      const amt = parseNum(m[2]);
+      if (amt > 1000 && res.holdings.length < 10) res.holdings.push({ name: m[1].trim().slice(0, 30), amount: amt });
+    }
+  }
+  return res;
+}
+
+// ---- Simulation ----
+function simulate(age, assets, monthly, returnPct) {
+  const r = returnPct / 100 / 12;
+  const rows = [];
+  let a = assets;
+  for (let yr = 0; yr <= Math.max(40 - age + 5, 10); yr++) {
+    const curAge = age + yr;
+    rows.push({ age: curAge, assets: Math.round(a) });
+    if (a >= TARGET && curAge >= 40) break;
+    for (let m = 0; m < 12; m++) a = a * (1 + r) + monthly;
+  }
+  return rows;
+}
+
+function reachMonth(age, assets, monthly, returnPct) {
+  const r = returnPct / 100 / 12;
+  let a = assets;
+  for (let m = 0; m < 360; m++) {
+    a = a * (1 + r) + monthly;
+    if (a >= TARGET) return age + m / 12;
+  }
+  return null;
+}
+
+// ---- State ----
+let G = {};
+
+// ---- Actions ----
+function loadSample() {
+  document.getElementById('inp-mf').value =
+`総資産 3,250,000円
+現金・預金 1,200,000円
+収入 420,000円
+支出 280,000円
+投資信託 2,050,000円`;
+  document.getElementById('inp-rakuten').value =
+`eMAXIS Slim 全世界株式 1,200,000円
 eMAXIS Slim 米国株式(S&P500) 600,000円
 日本株 250,000円
 評価額合計 2,050,000円
-損益合計 +180,000円`);
-  };
-
-  const handleAnalyze = () => {
-    const mf = parseMoneyForward(mfText);
-    const rakuten = parseRakuten(rakutenText);
-
-    let totalAssets = 0;
-    if (manualAssets && parseInt(manualAssets.replace(/,/g, '')) > 0) {
-      totalAssets = parseInt(manualAssets.replace(/,/g, '')) * 10000;
-    } else {
-      totalAssets = Math.max(mf.total, rakuten.totalAsset + (mf.categories[0]?.amount || 0));
-      if (totalAssets === 0 && rakuten.totalAsset > 0) totalAssets = rakuten.totalAsset;
-      if (totalAssets === 0 && mf.total > 0) totalAssets = mf.total;
-    }
-
-    const monthly = monthlySaving;
-    onAnalyze({
-      totalAssets,
-      monthly,
-      annualReturn,
-      age,
-      mf,
-      rakuten,
-      holdings: rakuten.holdings
-    });
-  };
-
-  return (
-    <div>
-      <div className="card">
-        <h2>⚙️ 基本設定</h2>
-        <div className="grid-2">
-          <div>
-            <label>現在の年齢</label>
-            <input type="number" value={age} onChange={e => setAge(parseInt(e.target.value) || 30)} min="20" max="39" />
-          </div>
-          <div>
-            <label>想定年間利回り (%)</label>
-            <input type="number" value={annualReturn} onChange={e => setAnnualReturn(parseFloat(e.target.value) || 5)} min="0" max="20" step="0.5" />
-          </div>
-          <div>
-            <label>月間貯蓄・投資額 (円)</label>
-            <input type="number" value={monthlySaving} onChange={e => setMonthlySaving(parseInt(e.target.value) || 0)} step="10000" />
-          </div>
-          <div>
-            <label>現在の総資産 (万円) ※データ貼り付け時は不要</label>
-            <input type="text" value={manualAssets} onChange={e => setManualAssets(e.target.value)} placeholder="例: 500（万円で入力）" />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid-2">
-        <div className="card">
-          <h2>📊 マネーフォワードのデータ</h2>
-          <p style={{fontSize:'0.8rem', color:'#64748b', marginBottom:'12px'}}>
-            マネーフォワードMEの資産・家計画面からテキストをコピーして貼り付け
-          </p>
-          <textarea
-            placeholder={`例：\n総資産 3,250,000円\n現金・預金 1,200,000円\n収入 420,000円\n支出 280,000円`}
-            value={mfText}
-            onChange={e => setMfText(e.target.value)}
-            rows={6}
-          />
-        </div>
-        <div className="card">
-          <h2>📈 楽天証券のデータ</h2>
-          <p style={{fontSize:'0.8rem', color:'#64748b', marginBottom:'12px'}}>
-            楽天証券の保有商品・資産合計画面からコピーして貼り付け
-          </p>
-          <textarea
-            placeholder={`例：\neMAXIS Slim 全世界株式 1,200,000円\nS&P500 600,000円\n評価額合計 2,050,000円\n損益合計 +180,000円`}
-            value={rakutenText}
-            onChange={e => setRakutenText(e.target.value)}
-            rows={6}
-          />
-        </div>
-      </div>
-
-      <div style={{textAlign:'center'}}>
-        <button className="secondary" onClick={handleSample}>サンプルデータで試す</button>
-        <button onClick={handleAnalyze} style={{marginLeft:'12px'}}>🚀 分析・ロードマップ生成</button>
-      </div>
-    </div>
-  );
+損益合計 +180,000円`;
 }
 
-function Dashboard({ data, onReset }) {
-  const [tab, setTab] = useState('roadmap');
-  const { totalAssets, monthly, annualReturn, age, rakuten, holdings } = data;
-  const TARGET = 100000000;
-  const { data: chartData, reachAge } = useMemo(
-    () => calcRoadmap(age, totalAssets, monthly, annualReturn),
-    [age, totalAssets, monthly, annualReturn]
-  );
-  const advice = useMemo(
-    () => generateAdvice(totalAssets, monthly, annualReturn, age, reachAge),
-    [totalAssets, monthly, annualReturn, age, reachAge]
-  );
+function analyze() {
+  const age = parseInt(document.getElementById('inp-age').value) || 32;
+  const monthly = parseInt(document.getElementById('inp-monthly').value) || 100000;
+  const ret = parseFloat(document.getElementById('inp-return').value) || 5;
+  const manualRaw = document.getElementById('inp-assets').value.trim();
+  const mf = parseMF(document.getElementById('inp-mf').value);
+  const rakuten = parseRakuten(document.getElementById('inp-rakuten').value);
 
-  const progress = Math.min((totalAssets / TARGET) * 100, 100);
-  const yearsLeft = 40 - age;
+  let totalAssets;
+  if (manualRaw) {
+    totalAssets = parseFloat(manualRaw.replace(/,/g,'')) * 10000;
+  } else {
+    totalAssets = Math.max(mf.total || 0, (rakuten.total || 0) + (mf.total && !rakuten.total ? 0 : 0));
+    if (!totalAssets) totalAssets = mf.total || rakuten.total || 0;
+  }
+
+  G = { age, monthly, ret, totalAssets, mf, rakuten };
+  renderDashboard();
+  document.getElementById('page-input').style.display = 'none';
+  document.getElementById('page-dashboard').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  document.getElementById('page-dashboard').style.display = 'none';
+  document.getElementById('page-input').style.display = 'block';
+}
+
+function showTab(name, el) {
+  ['roadmap','milestones','advice','holdings'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ---- Render ----
+function renderDashboard() {
+  const { age, monthly, ret, totalAssets, rakuten } = G;
+  const reachAge = reachMonth(age, totalAssets, monthly, ret);
   const onTrack = reachAge !== null && reachAge <= 40;
+  const yearsLeft = 40 - age;
+  const progress = Math.min(totalAssets / TARGET * 100, 100);
 
-  const milestones = [
-    { year: age + Math.ceil(yearsLeft * 0.25), label: '第1チェックポイント', desc: `目標: ${formatYen(Math.round(TARGET * 0.15))}以上の資産形成` },
-    { year: age + Math.ceil(yearsLeft * 0.5), label: '折り返し地点', desc: `目標: ${formatYen(Math.round(TARGET * 0.35))}以上。NISA満額運用中であること` },
-    { year: age + Math.ceil(yearsLeft * 0.75), label: '最終加速フェーズ', desc: `目標: ${formatYen(Math.round(TARGET * 0.65))}以上。複利効果が加速` },
-    { year: 40, label: '🎯 目標達成', desc: `1億円達成${onTrack ? '見込み！' : '（計画修正が必要）'}` },
-  ].filter(m => m.year >= age);
+  // Alert
+  let alertHtml;
+  if (onTrack) {
+    const yrs = Math.floor(reachAge), mos = Math.round((reachAge % 1) * 12);
+    alertHtml = `<div class="alert green">✅ 現在のペースで <strong>${yrs}歳${mos}ヶ月頃</strong>に1億円達成見込みです！</div>`;
+  } else {
+    alertHtml = `<div class="alert yellow">⚠️ 現在のペースでは40歳までに1億円達成が難しい計算です。アドバイスタブを参照してください。</div>`;
+  }
+  document.getElementById('dash-alert').innerHTML = alertHtml;
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={{background:'#1e293b', border:'1px solid #334155', borderRadius:'8px', padding:'12px', fontSize:'0.82rem'}}>
-        <p style={{color:'#94a3b8', marginBottom:'6px'}}>{label}歳</p>
-        {payload.map((p, i) => (
-          <p key={i} style={{color: p.color, fontWeight:600}}>{p.name}: {formatYen(p.value)}</p>
-        ))}
-      </div>
+  // Stats
+  const gainColor = rakuten.gain >= 0 ? 'green' : 'red';
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat ${onTrack ? 'green' : 'yellow'}">
+      <div class="lbl">現在の総資産</div>
+      <div class="val">${fmt(totalAssets)}</div>
+      <div class="sub">目標まで ${fmt(Math.max(0, TARGET - totalAssets))}</div>
+    </div>
+    <div class="stat blue">
+      <div class="lbl">達成率</div>
+      <div class="val">${progress.toFixed(1)}%</div>
+      <div class="sub">1億円まで</div>
+    </div>
+    <div class="stat ${onTrack ? 'green' : 'red'}">
+      <div class="lbl">達成予測</div>
+      <div class="val">${reachAge ? Math.floor(reachAge)+'歳'+(Math.round((reachAge%1)*12))+'ヶ月' : '40歳超'}</div>
+      <div class="sub">残り ${yearsLeft}年</div>
+    </div>
+    <div class="stat">
+      <div class="lbl">月間投資額</div>
+      <div class="val" style="font-size:1.2rem">${fmt(monthly)}</div>
+      <div class="sub">年間 ${fmt(monthly * 12)}</div>
+    </div>
+    <div class="stat">
+      <div class="lbl">想定利回り</div>
+      <div class="val">${ret}%</div>
+      <div class="sub">年率・複利</div>
+    </div>
+    <div class="stat ${gainColor}">
+      <div class="lbl">含み損益（楽天）</div>
+      <div class="val" style="font-size:1.1rem">${rakuten.gain >= 0 ? '+' : ''}${fmt(rakuten.gain)}</div>
+      <div class="sub">評価損益合計</div>
+    </div>
+  `;
+
+  // Progress bar
+  document.getElementById('progress-fill').style.width = progress + '%';
+  document.getElementById('progress-cur').textContent = fmt(totalAssets);
+
+  // Chart
+  renderChart(reachAge);
+
+  // Chart note
+  document.getElementById('chart-note').textContent =
+    `利回り${ret}%・月${fmt(monthly)}投資を継続した場合のシミュレーションです。実際の市場は変動します。`;
+
+  // Milestones
+  renderMilestones(age, yearsLeft, onTrack);
+
+  // Advice
+  renderAdvice(totalAssets, monthly, ret, age, reachAge, onTrack);
+
+  // Holdings
+  renderHoldings(rakuten);
+}
+
+function renderChart(reachAge) {
+  const { age, monthly, ret, totalAssets } = G;
+  const rows = simulate(age, totalAssets, monthly, ret);
+
+  const W = Math.min(window.innerWidth - 80, 900);
+  const H = 240;
+  const PL = 70, PR = 20, PT = 20, PB = 36;
+  const cW = W - PL - PR, cH = H - PT - PB;
+
+  const maxA = Math.max(TARGET * 1.1, ...rows.map(r => r.assets));
+  const minAge = rows[0].age, maxAge = rows[rows.length - 1].age;
+  const xScale = a => PL + (a - minAge) / (maxAge - minAge) * cW;
+  const yScale = v => PT + cH - (v / maxA) * cH;
+
+  // path for area + line
+  const pts = rows.map(r => `${xScale(r.age).toFixed(1)},${yScale(r.assets).toFixed(1)}`).join(' ');
+  const linePath = 'M ' + pts.split(' ').join(' L ');
+  const areaPath = linePath + ` L ${xScale(rows[rows.length-1].age).toFixed(1)},${(PT+cH).toFixed(1)} L ${xScale(rows[0].age).toFixed(1)},${(PT+cH).toFixed(1)} Z`;
+
+  // grid lines
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const v = maxA * f;
+    const y = yScale(v);
+    return `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${(PL+cW).toFixed(1)}" y2="${y.toFixed(1)}" class="chart-grid"/>
+      <text x="${(PL-6).toFixed(1)}" y="${(y+4).toFixed(1)}" class="chart-axis" text-anchor="end">${fmtM(v)}</text>`;
+  }).join('');
+
+  // x axis ticks
+  const xTicks = rows.map(r => {
+    const x = xScale(r.age);
+    return `<text x="${x.toFixed(1)}" y="${(PT+cH+18).toFixed(1)}" class="chart-axis" text-anchor="middle">${r.age}歳</text>`;
+  }).join('');
+
+  // 1億円 reference line
+  const refY = yScale(TARGET);
+  const refLine = `<line x1="${PL}" y1="${refY.toFixed(1)}" x2="${(PL+cW).toFixed(1)}" y2="${refY.toFixed(1)}" class="chart-ref"/>
+    <text x="${(PL+cW+4).toFixed(1)}" y="${(refY-4).toFixed(1)}" style="font-size:10px;fill:#f59e0b">1億</text>`;
+
+  // reach age line
+  let reachLine = '';
+  if (reachAge && reachAge <= maxAge) {
+    const rx = xScale(reachAge);
+    reachLine = `<line x1="${rx.toFixed(1)}" y1="${PT}" x2="${rx.toFixed(1)}" y2="${(PT+cH).toFixed(1)}" class="chart-ref-green"/>
+      <text x="${rx.toFixed(1)}" y="${(PT-4).toFixed(1)}" style="font-size:10px;fill:#34d399;text-anchor:middle">達成</text>`;
+  }
+
+  document.getElementById('chart-container').innerHTML = `
+    <svg class="chart" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      ${refLine}
+      ${reachLine}
+      <path d="${areaPath}" class="chart-area"/>
+      <path d="${linePath}" class="chart-line"/>
+      ${xTicks}
+    </svg>`;
+}
+
+function renderMilestones(age, yearsLeft, onTrack) {
+  const ms = [
+    { yr: age + Math.ceil(yearsLeft * 0.25), label: '第1チェックポイント', desc: `目標: ${fmt(Math.round(TARGET * 0.15))}以上。NISAを開設し積立スタート` },
+    { yr: age + Math.ceil(yearsLeft * 0.5),  label: '折り返し地点',   desc: `目標: ${fmt(Math.round(TARGET * 0.35))}以上。NISA満額・iDeCo上限拠出中であること` },
+    { yr: age + Math.ceil(yearsLeft * 0.75), label: '最終加速フェーズ', desc: `目標: ${fmt(Math.round(TARGET * 0.65))}以上。複利効果が本格化する時期` },
+    { yr: 40, label: '🎯 目標達成', desc: `1億円達成${onTrack ? '見込み！このままのペースを維持しよう' : '（月々の投資額増額または利回り改善が必要）'}` },
+  ].filter(m => m.yr >= age);
+
+  const checklist = [
+    ['新NISA成長投資枠を毎年240万円活用','green','必須'],
+    ['新NISAつみたて枠を毎年120万円活用','green','必須'],
+    ['iDeCo掛金を上限まで拠出','green','必須'],
+    ['生活防衛資金（6ヶ月分）を確保済み','green','必須'],
+    ['インデックスファンドで長期積立','green','必須'],
+    ['固定費（保険・サブスク・通信）を最適化','yellow','推奨'],
+    ['副業・追加収入源を検討','yellow','推奨'],
+  ];
+
+  document.getElementById('milestones-content').innerHTML =
+    ms.map(m => `<div class="milestone">
+      <div class="ms-year">${m.yr}歳</div>
+      <div class="ms-body"><h3>${m.label}</h3><p>${m.desc}</p></div>
+    </div>`).join('') +
+    `<div style="margin-top:18px;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:10px">チェックリスト</div>` +
+    checklist.map(([text, color, tag]) =>
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.83rem">
+        <span class="tag ${color}">${tag}</span><span>${text}</span>
+      </div>`).join('');
+}
+
+function renderAdvice(assets, monthly, ret, age, reachAge, onTrack) {
+  const advice = [];
+  const yearsLeft = 40 - age;
+
+  if (!onTrack) {
+    const neededM = Math.round(
+      (TARGET - assets * Math.pow(1 + ret/100, yearsLeft)) /
+      ((Math.pow(1 + ret/100/12, yearsLeft*12) - 1) / (ret/100/12))
     );
-  };
+    advice.push({ icon:'💰', tag:'red', tagLabel:'優先',
+      title:'月間貯蓄額を増やす',
+      body:`現在の月${fmt(monthly)}から増額が必要です。目安は月${fmt(Math.max(0,neededM))}程度。固定費（保険・サブスク・通信費）の見直しから始めましょう。` });
+  }
 
-  return (
-    <div>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
-        <div>
-          {onTrack
-            ? <div className="alert success">✅ 現在のペースで{Math.floor(reachAge)}歳{Math.round((reachAge % 1) * 12)}ヶ月頃に1億円達成見込みです！</div>
-            : <div className="alert warn">⚠️ 現在のペースでは40歳までに1億円達成が困難です。下記アドバイスを参考に計画を見直しましょう。</div>
-          }
-        </div>
-        <button className="secondary" onClick={onReset} style={{marginTop:0, whiteSpace:'nowrap'}}>← 再入力</button>
+  if (ret < 5) {
+    advice.push({ icon:'📈', tag:'yellow', tagLabel:'重要',
+      title:'運用利回りを高める',
+      body:`想定利回り${ret}%は保守的です。全世界株式インデックスファンド（eMAXIS Slim全世界株式・VT等）の長期投資で歴史的に年5〜7%の実績があります。` });
+  }
+
+  advice.push({ icon:'🏦', tag:'red', tagLabel:'優先',
+    title:'NISA・iDeCoを最大活用',
+    body:'新NISAは年360万円（成長投資枠240万+つみたて枠120万）が非課税。iDeCoは掛金全額が所得控除。この2つを先に埋めてから課税口座を使いましょう。' });
+
+  if (assets < 10000000) {
+    advice.push({ icon:'🛡️', tag:'yellow', tagLabel:'重要',
+      title:'生活防衛資金を確保',
+      body:'投資の前に生活費6ヶ月分を現金で確保。暴落時も投資を継続できるセーフティネットになります。' });
+  }
+
+  advice.push({ icon:'📊', tag:'yellow', tagLabel:'重要',
+    title:'ポートフォリオを分散',
+    body:'国内株・米国株・先進国株等に分散。30代はリスク資産80〜90%でも許容範囲。年1〜2回のリバランスを忘れずに。' });
+
+  advice.push({ icon:'💼', tag:'blue', tagLabel:'任意',
+    title:'収入源を複数持つ',
+    body:'副業・フリーランス・投資収益など複数の収入源を持つと貯蓄率が上がります。本業スキルを活かした副業が最も効率的です。' });
+
+  document.getElementById('advice-content').innerHTML = advice.map(a =>
+    `<div class="advice">
+      <div class="advice-icon">${a.icon}</div>
+      <div class="advice-body">
+        <h3><span class="tag ${a.tag}">${a.tagLabel}</span>${a.title}</h3>
+        <p>${a.body}</p>
       </div>
-
-      <div className="grid-3" style={{marginBottom:'20px'}}>
-        <div className={`stat-card ${onTrack ? 'success' : 'warning'}`}>
-          <div className="label">現在の総資産</div>
-          <div className="value">{formatYen(totalAssets)}</div>
-          <div className="sub">目標まで {formatYen(Math.max(0, TARGET - totalAssets))}</div>
-        </div>
-        <div className="stat-card highlight">
-          <div className="label">達成率</div>
-          <div className="value">{progress.toFixed(1)}%</div>
-          <div className="sub">1億円まで</div>
-        </div>
-        <div className={`stat-card ${onTrack ? 'success' : 'danger'}`}>
-          <div className="label">達成予測</div>
-          <div className="value">{reachAge ? `${Math.floor(reachAge)}歳${Math.round((reachAge%1)*12)}ヶ月` : '40歳超'}</div>
-          <div className="sub">残り {yearsLeft}年</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">月間投資額</div>
-          <div className="value">{formatYen(monthly)}</div>
-          <div className="sub">年間 {formatYen(monthly * 12)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">想定利回り</div>
-          <div className="value">{annualReturn}%</div>
-          <div className="sub">年率・複利</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">含み損益（楽天）</div>
-          <div className={`value ${rakuten.gainLoss >= 0 ? 'pos' : 'neg'}`} style={{color: rakuten.gainLoss >= 0 ? '#34d399' : '#f87171'}}>
-            {rakuten.gainLoss >= 0 ? '+' : ''}{formatYen(rakuten.gainLoss)}
-          </div>
-          <div className="sub">評価損益合計</div>
-        </div>
-      </div>
-
-      <div className="card" style={{marginBottom:'20px'}}>
-        <div className="label" style={{marginBottom:'4px'}}>1億円達成進捗</div>
-        <div className="progress-bar">
-          <div className="progress-fill" style={{width:`${progress}%`}} />
-        </div>
-        <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.75rem', color:'#64748b', marginTop:'4px'}}>
-          <span>0円</span>
-          <span style={{color:'#60a5fa', fontWeight:600}}>{formatYen(totalAssets)}</span>
-          <span>1億円</span>
-        </div>
-      </div>
-
-      <div className="tab-bar">
-        {[['roadmap','📈 資産推移'], ['milestones','🗓 マイルストーン'], ['advice','💡 アドバイス'], ['holdings','💼 保有資産']].map(([key, label]) => (
-          <div key={key} className={`tab ${tab === key ? 'active' : ''}`} onClick={() => setTab(key)}>{label}</div>
-        ))}
-      </div>
-
-      {tab === 'roadmap' && (
-        <div className="card">
-          <h2>📈 資産推移シミュレーション</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{top:10, right:10, left:10, bottom:0}}>
-                <defs>
-                  <linearGradient id="colorAssets" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="age" stroke="#64748b" tick={{fill:'#94a3b8', fontSize:12}} tickFormatter={v => `${v}歳`} />
-                <YAxis stroke="#64748b" tick={{fill:'#94a3b8', fontSize:11}} tickFormatter={v => formatM(v)+'万'} width={70} />
-                <Tooltip content={<CustomTooltip />} />
-                <ReferenceLine y={TARGET} stroke="#f59e0b" strokeDasharray="6 3" label={{value:'1億円', fill:'#f59e0b', fontSize:11}} />
-                {reachAge && <ReferenceLine x={Math.floor(reachAge)} stroke="#34d399" strokeDasharray="6 3" label={{value:'達成', fill:'#34d399', fontSize:11}} />}
-                <Area type="monotone" dataKey="assets" stroke="#3b82f6" fill="url(#colorAssets)" name="推定資産" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="alert info" style={{marginTop:'16px'}}>
-            利回り{annualReturn}%・月{formatYen(monthly)}投資を継続した場合のシミュレーションです。実際の市場は変動します。
-          </div>
-        </div>
-      )}
-
-      {tab === 'milestones' && (
-        <div className="card">
-          <h2>🗓 マイルストーン</h2>
-          {milestones.map((m, i) => (
-            <div className="milestone" key={i}>
-              <div className="milestone-year">{m.year}歳</div>
-              <div className="milestone-content">
-                <h3>{m.label}</h3>
-                <p>{m.desc}</p>
-              </div>
-            </div>
-          ))}
-          <div style={{marginTop:'20px'}}>
-            <div className="section-title">チェックリスト</div>
-            {[
-              ['新NISA成長投資枠を毎年240万円活用','green'],
-              ['新NISAつみたて投資枠を毎年120万円活用','green'],
-              ['iDeCo掛金を上限まで拠出','green'],
-              ['生活防衛資金（6ヶ月分）を確保済み','green'],
-              ['インデックスファンドで長期積立','green'],
-              ['支出の固定費を最適化済み','yellow'],
-              ['副業・追加収入源を検討','yellow'],
-            ].map(([item, color], i) => (
-              <div key={i} style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px', fontSize:'0.85rem'}}>
-                <span className={`tag ${color}`}>{color === 'green' ? '必須' : '推奨'}</span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tab === 'advice' && (
-        <div className="card">
-          <h2>💡 個別アドバイス</h2>
-          {advice.map((a, i) => (
-            <div className="advice-item" key={i}>
-              <div className="advice-icon">{a.icon}</div>
-              <div className="advice-content">
-                <h3>
-                  {a.priority === 'high' && <span className="tag red">優先</span>}
-                  {a.priority === 'medium' && <span className="tag yellow">重要</span>}
-                  {a.priority === 'low' && <span className="tag">任意</span>}
-                  {a.title}
-                </h3>
-                <p>{a.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === 'holdings' && (
-        <div className="card">
-          <h2>💼 保有資産（楽天証券）</h2>
-          {holdings && holdings.length > 0 ? (
-            <>
-              {holdings.map((h, i) => (
-                <div className="holding-row" key={i}>
-                  <span className="holding-name">{h.name}</span>
-                  <span className="holding-amount">{formatYen(h.amount)}</span>
-                </div>
-              ))}
-              <div className="holding-row" style={{borderTop:'1px solid #334155', marginTop:'8px', paddingTop:'12px'}}>
-                <span style={{fontWeight:700}}>評価額合計</span>
-                <span className="holding-amount" style={{fontSize:'1.1rem'}}>{formatYen(rakuten.totalAsset)}</span>
-              </div>
-            </>
-          ) : (
-            <div className="empty-state">
-              <div className="icon">📋</div>
-              <p>楽天証券のデータが取得できませんでした。<br/>保有商品の一覧テキストを入力画面に貼り付けてください。</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+    </div>`).join('');
 }
 
-function App() {
-  const [result, setResult] = useState(null);
-
-  return (
-    <div id="root">
-      <div className="header">
-        <h1>資産管理 × 40歳1億円ロードマップ</h1>
-        <p>楽天証券・マネーフォワードのデータを貼り付けて、あなた専用の資産計画を生成します</p>
-      </div>
-      {result === null
-        ? <InputSection onAnalyze={setResult} />
-        : <Dashboard data={result} onReset={() => setResult(null)} />
-      }
-    </div>
-  );
+function renderHoldings(rakuten) {
+  const { holdings, total, gain } = rakuten;
+  if (!holdings.length && !total) {
+    document.getElementById('holdings-content').innerHTML =
+      `<div class="empty"><div>📋</div><p>楽天証券のデータが取得できませんでした。<br>保有商品の一覧テキストを入力画面に貼り付けてください。</p></div>`;
+    return;
+  }
+  document.getElementById('holdings-content').innerHTML =
+    holdings.map(h => `<div class="holding"><span class="holding-name">${h.name}</span><span class="holding-amt">${fmt(h.amount)}</span></div>`).join('') +
+    (total ? `<div class="holding" style="border-top:1px solid #334155;margin-top:8px;padding-top:12px">
+      <span style="font-weight:700">評価額合計</span>
+      <span class="holding-amt" style="font-size:1.05rem">${fmt(total)}</span>
+    </div>` : '');
 }
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
 </script>
 </body>
 </html>
