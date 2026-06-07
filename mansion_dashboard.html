@@ -156,12 +156,14 @@ var data=[], filtered=[], sortKey="date", sortAsc=false, selId=null, chartsVisib
 
 function fmt(n){ return Number(n).toLocaleString("ja-JP"); }
 
+/*LOAD_DATA_START*/
 function loadData(){
   try{
     var raw=localStorage.getItem("mansion_v2");
     data=raw?JSON.parse(raw):[];
   }catch(e){data=[];}
 }
+/*LOAD_DATA_END*/
 function saveData(){
   try{localStorage.setItem("mansion_v2",JSON.stringify(data));}catch(e){}
 }

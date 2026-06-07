@@ -341,26 +341,12 @@ def embed_into_html(records):
         "  }catch(e){data=REAL_DATA.slice();}\n"
         "}"
     )
-    old_load = (
-        "function loadData(){\n"
-        "  try{\n"
-        "    var raw=localStorage.getItem(\"mansion_v2\");\n"
-        "    data=raw?JSON.parse(raw):[];\n"
-        "  }catch(e){data=[];}\n"
-        "}"
-    )
-
-    if old_load in html:
-        html = html.replace(old_load, new_load)
+    # マーカーコメントで囲まれた範囲をまるごと置換
+    marker_re = re.compile(r'/\*LOAD_DATA_START\*/.*?/\*LOAD_DATA_END\*/', re.DOTALL)
+    if marker_re.search(html):
+        html = marker_re.sub(new_load, html)
     else:
-        # フォールバック: loadData関数をまるごと正規表現で置換
-        import re as _re
-        html = _re.sub(
-            r'function loadData\(\)\{.*?\}',
-            new_load,
-            html,
-            flags=_re.DOTALL
-        )
+        print("  [WARN] loadDataマーカーが見つかりません。mansion_dashboard.htmlを確認してください。")
 
     with open(DASH_DST, "w", encoding="utf-8") as f:
         f.write(html)
