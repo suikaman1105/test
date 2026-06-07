@@ -4,6 +4,7 @@ SUUMO 中古マンション スクレイパー
 """
 
 import urllib.request
+import urllib.parse
 import re
 import json
 import time
@@ -16,19 +17,6 @@ DATA_FILE   = "mansion_realdata.json"
 DASH_SRC    = "mansion_dashboard.html"
 DASH_DST    = "mansion_dashboard_real.html"
 
-
-def load_config():
-    if not os.path.exists(CONFIG_FILE):
-        print(f"[ERROR] {CONFIG_FILE} が見つかりません")
-        sys.exit(1)
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
-    wards = {w["name"]: w["code"] for w in cfg.get("wards", [])}
-    if not wards:
-        print("[ERROR] config.json の wards が空です")
-        sys.exit(1)
-    return wards, cfg.get("max_pages", 3), cfg.get("sleep_sec", 2.0)
-
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -37,6 +25,28 @@ HEADERS = {
     ),
     "Accept-Language": "ja,en;q=0.9",
 }
+
+
+def load_config():
+    if not os.path.exists(CONFIG_FILE):
+        print(f"[ERROR] {CONFIG_FILE} が見つかりません")
+        sys.exit(1)
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+    targets = cfg.get("targets", [])
+    if not targets:
+        print("[ERROR] config.json の targets が空です")
+        sys.exit(1)
+    return targets, cfg.get("max_pages", 3), cfg.get("sleep_sec", 2.0)
+
+
+def build_page_url(base_url, page):
+    """ベースURLにページ番号パラメータを付与する"""
+    parsed = urllib.parse.urlparse(base_url)
+    params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+    params["pn"] = [str(page)]
+    new_query = urllib.parse.urlencode({k: v[0] for k, v in params.items()})
+    return urllib.parse.urlunparse(parsed._replace(query=new_query))
 
 
 def fetch(url):
@@ -77,22 +87,17 @@ def parse_floor(s):
 
 
 def extract_field(block, label):
-    """<dt>label</dt> の直後の <dd> テキストを返す"""
     pattern = re.escape(label) + r"</dt>\s*<dd[^>]*>(.*?)</dd>"
     m = re.search(pattern, block, re.DOTALL)
     return strip_tags(m.group(1)) if m else ""
 
 
-def parse_block(block, ward_name, today):
-    """1物件ブロックからレコードを生成"""
-    # 物件名
+def parse_block(block, label, today):
     name = extract_field(block, "物件名")
     if not name:
         return None
 
-    # 販売価格
     price_raw = extract_field(block, "販売価格")
-    # dottable-value span からも試みる
     if not price_raw:
         m = re.search(r'class="dottable-value"[^>]*>(.*?)</span>', block, re.DOTALL)
         if m:
@@ -101,31 +106,22 @@ def parse_block(block, ward_name, today):
     if not total:
         return None
 
-    # 専有面積
-    size_raw = extract_field(block, "専有面積")
-    if not size_raw:
-        size_raw = extract_field(block, "建物面積")
+    size_raw = extract_field(block, "専有面積") or extract_field(block, "建物面積")
     size = parse_size(size_raw)
     if not size or size <= 0:
         return None
 
-    # 階数
-    floor_raw = extract_field(block, "階建")
-    if not floor_raw:
-        floor_raw = extract_field(block, "所在階")
-    floor = parse_floor(floor_raw) if floor_raw else 1
+    floor_raw = extract_field(block, "所在階") or extract_field(block, "階建")
+    floor = parse_floor(floor_raw)
 
-    # 所在地
     addr = extract_field(block, "所在地")
 
-    price_sqm = round(total * 10000 / size)
-
     return {
-        "area":          ward_name,
+        "area":          label,
         "building":      name,
         "address":       addr,
         "date":          today,
-        "price_per_sqm": price_sqm,
+        "price_per_sqm": round(total * 10000 / size),
         "total_price":   total,
         "size":          round(size, 1),
         "floor":         floor,
@@ -133,30 +129,26 @@ def parse_block(block, ward_name, today):
     }
 
 
-def scrape_ward(ward_name, city_code, today):
+def scrape_target(label, base_url, max_pages, sleep_sec, today):
     records = []
-    for page in range(1, MAX_PAGES + 1):
-        url = (
-            f"https://suumo.jp/jj/bukken/ichiran/JJ012FC001/"
-            f"?ar=030&bs=021&ta=13&sc={city_code}&pn={page}"
-        )
+    for page in range(1, max_pages + 1):
+        url = build_page_url(base_url, page)
         print(f"    p{page} ...", end=" ", flush=True)
         html = fetch(url)
         if not html:
             break
-        time.sleep(SLEEP_SEC)
+        time.sleep(sleep_sec)
 
-        # dottable--cassette を区切りとして物件ブロックに分割
         parts = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
         before = len(records)
         for part in parts[1:]:
-            rec = parse_block(part, ward_name, today)
+            rec = parse_block(part, label, today)
             if rec:
                 records.append(rec)
-        print(f"{len(records)-before}件")
+        print(f"{len(records) - before}件")
 
-        # 次ページ確認
-        if f"pn={page+1}" not in html:
+        # 次ページが存在しない場合は終了
+        if f"pn={page + 1}" not in html:
             break
 
     return records
@@ -168,23 +160,22 @@ def main():
     print("個人モニタリング用途 / 過度なアクセス禁止")
     print("=" * 50)
 
-    wards, max_pages, sleep_sec = load_config()
-    global MAX_PAGES, SLEEP_SEC
-    MAX_PAGES = max_pages
-    SLEEP_SEC = sleep_sec
-
-    print(f"対象: {', '.join(wards.keys())} （{len(wards)}区）")
-    print(f"設定: 最大{MAX_PAGES}ページ / {SLEEP_SEC}秒間隔\n")
+    targets, max_pages, sleep_sec = load_config()
+    print(f"対象: {len(targets)}件のURL")
+    print(f"設定: 最大{max_pages}ページ / {sleep_sec}秒間隔\n")
 
     today = datetime.date.today().isoformat()
     all_records = []
 
-    for ward_name, city_code in wards.items():
-        print(f"\n【{ward_name}】")
-        recs = scrape_ward(ward_name, city_code, today)
+    for t in targets:
+        label = t.get("label", t["url"])
+        url   = t["url"]
+        print(f"\n【{label}】")
+        print(f"  URL: {url}")
+        recs = scrape_target(label, url, max_pages, sleep_sec, today)
         print(f"  合計: {len(recs)}件")
         all_records.extend(recs)
-        time.sleep(SLEEP_SEC)
+        time.sleep(sleep_sec)
 
     if not all_records:
         print("\nデータが取得できませんでした。")
@@ -221,7 +212,6 @@ def embed_into_html(records):
         html = f.read()
 
     data_js = json.dumps(records, ensure_ascii=False)
-
     new_load = (
         f"var REAL_DATA = {data_js};\n"
         "function loadData(){\n"
