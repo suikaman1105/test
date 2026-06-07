@@ -129,7 +129,7 @@ def parse_block(block, label, today):
     }
 
 
-def scrape_target(label, base_url, max_pages, sleep_sec, today):
+def scrape_target(label, base_url, max_pages, sleep_sec, today, building_filter=None):
     records = []
     for page in range(1, max_pages + 1):
         url = build_page_url(base_url, page)
@@ -143,11 +143,15 @@ def scrape_target(label, base_url, max_pages, sleep_sec, today):
         before = len(records)
         for part in parts[1:]:
             rec = parse_block(part, label, today)
-            if rec:
-                records.append(rec)
+            if not rec:
+                continue
+            # building_filter が指定されていれば物件名で絞り込む
+            if building_filter:
+                if not any(kw in rec["building"] for kw in building_filter):
+                    continue
+            records.append(rec)
         print(f"{len(records) - before}件")
 
-        # 次ページが存在しない場合は終了
         if f"pn={page + 1}" not in html:
             break
 
@@ -168,11 +172,12 @@ def main():
     all_records = []
 
     for t in targets:
-        label = t.get("label", t["url"])
-        url   = t["url"]
+        label           = t.get("label", t["url"])
+        url             = t["url"]
+        building_filter = t.get("building_filter", None)
         print(f"\n【{label}】")
         print(f"  URL: {url}")
-        recs = scrape_target(label, url, max_pages, sleep_sec, today)
+        recs = scrape_target(label, url, max_pages, sleep_sec, today, building_filter)
         print(f"  合計: {len(recs)}件")
         all_records.extend(recs)
         time.sleep(sleep_sec)
