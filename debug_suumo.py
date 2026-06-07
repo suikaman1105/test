@@ -3,11 +3,14 @@ import re
 with open("debug.html", "r", encoding="utf-8") as f:
     html = f.read()
 
-# 最初の価格出現箇所の前後500文字を表示
-prices = [m.start() for m in re.finditer(r'\d+万円', html)]
-print(f"価格出現箇所数: {len(prices)}")
-if prices:
-    for i, pos in enumerate(prices[:3]):
-        print(f"\n=== 価格{i+1}周辺 ===")
-        print(html[max(0,pos-300):pos+200])
-        print("...")
+# ブロック分割
+parts = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
+print(f"物件ブロック数: {len(parts)-1}")
+
+if len(parts) > 1:
+    block = parts[1]
+    # ブロック内の全hrefを表示
+    hrefs = re.findall(r'href="([^"]+)"', block)
+    print("\n最初のブロック内のhref一覧:")
+    for h in hrefs:
+        print(f"  {h}")
