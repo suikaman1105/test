@@ -1,23 +1,13 @@
-"""
-SUUMOのHTML構造を詳しく確認する
-"""
 import re
 
 with open("debug.html", "r", encoding="utf-8") as f:
     html = f.read()
 
-# itemlinebox item ブロックを抽出して構造確認
-blocks = re.split(r'(?=<li[^>]*class="[^"]*itemlinebox[^"]*")', html)
-print(f"itemlinebox ブロック数: {len(blocks)-1}")
-
-if len(blocks) > 1:
-    sample = blocks[1][:3000]
-    print("\n--- 最初のブロック（先頭3000文字）---")
-    print(sample)
-else:
-    # designateitem で試す
-    blocks2 = re.split(r'(?=<div[^>]*class="[^"]*designateitem[^"]*")', html)
-    print(f"\ndesignateitem ブロック数: {len(blocks2)-1}")
-    if len(blocks2) > 1:
-        print("\n--- 最初のブロック（先頭3000文字）---")
-        print(blocks2[1][:3000])
+# 最初の価格出現箇所の前後500文字を表示
+prices = [m.start() for m in re.finditer(r'\d+万円', html)]
+print(f"価格出現箇所数: {len(prices)}")
+if prices:
+    for i, pos in enumerate(prices[:3]):
+        print(f"\n=== 価格{i+1}周辺 ===")
+        print(html[max(0,pos-300):pos+200])
+        print("...")
