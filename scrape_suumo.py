@@ -345,13 +345,22 @@ def embed_into_html(records):
         "function loadData(){\n"
         "  try{\n"
         "    var raw=localStorage.getItem(\"mansion_v2\");\n"
-        "    data=raw?JSON.parse(raw):genData();\n"
-        "  }catch(e){data=genData();}\n"
+        "    data=raw?JSON.parse(raw):[];\n"
+        "  }catch(e){data=[];}\n"
         "}"
     )
 
-    html = html.replace(old_load, new_load) if old_load in html else html.replace(
-        "// 初期化", f"var REAL_DATA={data_js};\n// 初期化", 1)
+    if old_load in html:
+        html = html.replace(old_load, new_load)
+    else:
+        # フォールバック: loadData関数をまるごと正規表現で置換
+        import re as _re
+        html = _re.sub(
+            r'function loadData\(\)\{.*?\}',
+            new_load,
+            html,
+            flags=_re.DOTALL
+        )
 
     with open(DASH_DST, "w", encoding="utf-8") as f:
         f.write(html)
