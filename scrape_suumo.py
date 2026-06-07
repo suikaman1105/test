@@ -344,7 +344,7 @@ def embed_into_html(records):
     # マーカーコメントで囲まれた範囲をまるごと置換
     marker_re = re.compile(r'/\*LOAD_DATA_START\*/.*?/\*LOAD_DATA_END\*/', re.DOTALL)
     if marker_re.search(html):
-        html = marker_re.sub(new_load, html)
+        html = marker_re.sub(lambda m: new_load, html)
     else:
         print("  [WARN] loadDataマーカーが見つかりません。mansion_dashboard.htmlを確認してください。")
 
