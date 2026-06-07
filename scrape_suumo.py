@@ -331,22 +331,11 @@ def embed_into_html(records):
         html = f.read()
 
     data_js = json.dumps(records, ensure_ascii=False)
-    new_load = (
-        f"var REAL_DATA = {data_js};\n"
-        "function loadData(){\n"
-        "  try{\n"
-        "    var saved=localStorage.getItem(\"mansion_v2\");\n"
-        "    var savedArr=saved?JSON.parse(saved):[];\n"
-        "    data=savedArr.length>REAL_DATA.length?savedArr:REAL_DATA.slice();\n"
-        "  }catch(e){data=REAL_DATA.slice();}\n"
-        "}"
-    )
-    # マーカーコメントで囲まれた範囲をまるごと置換
-    marker_re = re.compile(r'/\*LOAD_DATA_START\*/.*?/\*LOAD_DATA_END\*/', re.DOTALL)
-    if marker_re.search(html):
-        html = marker_re.sub(lambda m: new_load, html)
+    placeholder = "/*INJECTED_DATA_PLACEHOLDER*/"
+    if placeholder in html:
+        html = html.replace(placeholder, "/* injected */\nINJECTED_DATA = " + data_js + ";")
     else:
-        print("  [WARN] loadDataマーカーが見つかりません。mansion_dashboard.htmlを確認してください。")
+        print("  [WARN] プレースホルダーが見つかりません")
 
     with open(DASH_DST, "w", encoding="utf-8") as f:
         f.write(html)
