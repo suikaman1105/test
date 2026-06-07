@@ -19,16 +19,19 @@ def extract_field(block, label):
     m = re.search(re.escape(label) + r"</dt>\s*<dd[^>]*>(.*?)</dd>", block, re.DOTALL)
     return strip_tags(m.group(1)) if m else ""
 
-url = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?" + urllib.parse.urlencode({
-    "ar": "030", "bs": "021", "ta": "14", "fw2": "湘南辻堂"
-})
-print(f"URL: {url}\n")
-
-html = fetch(url)
-blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
-print(f"ブロック数: {len(blocks)-1}\n")
-print("物件名一覧:")
-for b in blocks[1:]:
-    name = extract_field(b, "物件名")
-    if name:
-        print(f"  {name}")
+# 新築マンション（bs=010）で検索
+for bs, label in [("010", "新築マンション"), ("011", "新築分譲"), ("021", "中古マンション")]:
+    url = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?" + urllib.parse.urlencode({
+        "ar": "030", "bs": bs, "ta": "14", "fw2": "湘南辻堂"
+    })
+    html = fetch(url)
+    blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
+    names = []
+    for b in blocks[1:]:
+        name = extract_field(b, "物件名")
+        if name:
+            names.append(name)
+    print(f"bs={bs} ({label}): {len(names)}件")
+    for n in names:
+        print(f"  {n}")
+    print()
