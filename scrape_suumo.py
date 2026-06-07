@@ -49,6 +49,19 @@ def build_page_url(base_url, page):
     return urllib.parse.urlunparse(parsed._replace(query=new_query))
 
 
+def build_search_url(building_name, prefecture="13"):
+    """建物名からSUUMO検索URLを自動生成する"""
+    # 半角英数をそのまま使い、建物名をフリーワード検索
+    params = {
+        "ar":  "030",
+        "bs":  "021",
+        "ta":  prefecture,
+        "fw2": building_name,   # フリーワード検索
+    }
+    base = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?"
+    return base + urllib.parse.urlencode(params)
+
+
 def fetch(url):
     req = urllib.request.Request(url, headers=HEADERS)
     try:
@@ -177,9 +190,27 @@ def main():
     all_records = []
 
     for t in targets:
-        label           = t.get("label", t["url"])
-        url             = t["url"]
-        building_filter = t.get("building_filter", None)
+        label           = t.get("label", "")
+        building_name   = t.get("building_name")
+        prefecture      = t.get("prefecture", "13")
+        building_filter = t.get("building_filter")
+
+        if building_name:
+            # 建物名から自動でURL生成
+            url = build_search_url(building_name, prefecture)
+            # 建物名フィルタが未指定なら自動設定
+            if not building_filter:
+                building_filter = [building_name]
+            if not label:
+                label = building_name
+        elif "url" in t:
+            url = t["url"]
+            if not label:
+                label = url
+        else:
+            print(f"  [SKIP] url または building_name が必要です")
+            continue
+
         print(f"\n【{label}】")
         print(f"  URL: {url}")
         recs = scrape_target(label, url, max_pages, sleep_sec, today, building_filter)
