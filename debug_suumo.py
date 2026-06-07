@@ -12,19 +12,23 @@ def fetch(url):
     with urllib.request.urlopen(req, timeout=15) as res:
         return res.read().decode("utf-8", errors="replace")
 
-# 複数のパラメータ名を試す
-tests = [
-    ("fw2",     "THE TOWER 湘南辻堂"),
-    ("fw2",     "湘南辻堂"),
-    ("bknname", "湘南辻堂"),
-    ("kb",      "湘南辻堂"),
-]
+def strip_tags(s):
+    return re.sub(r"<[^>]+>", "", s).strip()
 
-base = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?ar=030&bs=021&ta=14&"
+def extract_field(block, label):
+    m = re.search(re.escape(label) + r"</dt>\s*<dd[^>]*>(.*?)</dd>", block, re.DOTALL)
+    return strip_tags(m.group(1)) if m else ""
 
-for param, word in tests:
-    url = base + urllib.parse.urlencode({param: word})
-    html = fetch(url)
-    blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
-    prices = re.findall(r'\d+万円', html)
-    print(f"{param}={word!r:20s} → ブロック:{len(blocks)-1}件 / 価格:{len(prices)}件")
+url = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?" + urllib.parse.urlencode({
+    "ar": "030", "bs": "021", "ta": "14", "fw2": "湘南辻堂"
+})
+print(f"URL: {url}\n")
+
+html = fetch(url)
+blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
+print(f"ブロック数: {len(blocks)-1}\n")
+print("物件名一覧:")
+for b in blocks[1:]:
+    name = extract_field(b, "物件名")
+    if name:
+        print(f"  {name}")
