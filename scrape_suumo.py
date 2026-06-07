@@ -11,24 +11,23 @@ import os
 import sys
 import datetime
 
-WARDS = {
-    "千代田区": "13101",
-    "中央区":   "13102",
-    "港区":     "13103",
-    "新宿区":   "13104",
-    "文京区":   "13105",
-    "品川区":   "13109",
-    "目黒区":   "13110",
-    "世田谷区": "13112",
-    "渋谷区":   "13113",
-    "豊島区":   "13116",
-}
-
-MAX_PAGES   = 3
-SLEEP_SEC   = 2.0
+CONFIG_FILE = "config.json"
 DATA_FILE   = "mansion_realdata.json"
 DASH_SRC    = "mansion_dashboard.html"
 DASH_DST    = "mansion_dashboard_real.html"
+
+
+def load_config():
+    if not os.path.exists(CONFIG_FILE):
+        print(f"[ERROR] {CONFIG_FILE} が見つかりません")
+        sys.exit(1)
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+    wards = {w["name"]: w["code"] for w in cfg.get("wards", [])}
+    if not wards:
+        print("[ERROR] config.json の wards が空です")
+        sys.exit(1)
+    return wards, cfg.get("max_pages", 3), cfg.get("sleep_sec", 2.0)
 
 HEADERS = {
     "User-Agent": (
@@ -169,10 +168,18 @@ def main():
     print("個人モニタリング用途 / 過度なアクセス禁止")
     print("=" * 50)
 
+    wards, max_pages, sleep_sec = load_config()
+    global MAX_PAGES, SLEEP_SEC
+    MAX_PAGES = max_pages
+    SLEEP_SEC = sleep_sec
+
+    print(f"対象: {', '.join(wards.keys())} （{len(wards)}区）")
+    print(f"設定: 最大{MAX_PAGES}ページ / {SLEEP_SEC}秒間隔\n")
+
     today = datetime.date.today().isoformat()
     all_records = []
 
-    for ward_name, city_code in WARDS.items():
+    for ward_name, city_code in wards.items():
         print(f"\n【{ward_name}】")
         recs = scrape_ward(ward_name, city_code, today)
         print(f"  合計: {len(recs)}件")
