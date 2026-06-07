@@ -1,5 +1,4 @@
 import urllib.request
-import urllib.parse
 import re
 
 HEADERS = {
@@ -7,31 +6,28 @@ HEADERS = {
     "Accept-Language": "ja,en;q=0.9",
 }
 
-def fetch(url):
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=15) as res:
-        return res.read().decode("utf-8", errors="replace")
+URL = "https://suumo.jp/jj/bukken/ichiran/JJ010FJ001/?ar=030&bs=010&fw=%EF%BC%B4%EF%BC%A8%EF%BC%A5%E3%80%80%EF%BC%B4%EF%BC%AF%EF%BC%B7%EF%BC%A5%EF%BC%B2%E3%80%80%E6%B9%98%E5%8D%97%E8%BE%BB%E5%A0%82"
 
-def strip_tags(s):
-    return re.sub(r"<[^>]+>", "", s).strip()
+req = urllib.request.Request(URL, headers=HEADERS)
+with urllib.request.urlopen(req, timeout=15) as res:
+    html = res.read().decode("utf-8", errors="replace")
 
-def extract_field(block, label):
-    m = re.search(re.escape(label) + r"</dt>\s*<dd[^>]*>(.*?)</dd>", block, re.DOTALL)
-    return strip_tags(m.group(1)) if m else ""
+with open("debug.html", "w", encoding="utf-8") as f:
+    f.write(html)
 
-# 新築マンション（bs=010）で検索
-for bs, label in [("010", "新築マンション"), ("011", "新築分譲"), ("021", "中古マンション")]:
-    url = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?" + urllib.parse.urlencode({
-        "ar": "030", "bs": bs, "ta": "14", "fw2": "湘南辻堂"
-    })
-    html = fetch(url)
-    blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
-    names = []
-    for b in blocks[1:]:
-        name = extract_field(b, "物件名")
-        if name:
-            names.append(name)
-    print(f"bs={bs} ({label}): {len(names)}件")
-    for n in names:
-        print(f"  {n}")
-    print()
+# 物件ブロックのクラス名を探す
+classes = re.findall(r'class="([^"]*(?:cassette|item|property|bukken|list)[^"]*)"', html)
+unique = sorted(set(classes))
+print("検出クラス名:")
+for c in unique[:30]:
+    print(f"  {c}")
+
+# 価格確認
+prices = re.findall(r'[\d,]+万円', html)
+print(f"\n価格パターン: {len(prices)}件")
+if prices:
+    print("例:", prices[:5])
+
+# dottable--cassette で試す
+blocks = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
+print(f"\ndottable--cassetteブロック: {len(blocks)-1}件")
