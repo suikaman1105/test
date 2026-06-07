@@ -247,7 +247,8 @@ function renderTable(){
     tb+='<td>'+r.date+'</td><td>'+fmt(r.price_per_sqm)+'</td><td>'+fmt(r.total_price)+'</td>';
     tb+='<td>'+r.size.toFixed(1)+'</td><td>'+r.floor+'</td>';
     tb+='<td '+sc+'>'+r.status+'</td>';
-    tb+='<td><button class="btn btn-gray" style="padding:3px 8px;font-size:12px" onclick="showDet('+r.id+')">詳細</button></td>';
+    var suumoBtn=r.suumo_url?'<a href="'+r.suumo_url+'" target="_blank" class="btn btn-blue" style="padding:3px 8px;font-size:12px;text-decoration:none;margin-right:4px">SUUMO</a>':'';
+    tb+='<td>'+suumoBtn+'<button class="btn btn-gray" style="padding:3px 8px;font-size:12px" onclick="showDet('+r.id+')">詳細</button></td>';
     tb+='</tr>';
   }
   document.getElementById("tbody").innerHTML=tb;
@@ -320,6 +321,9 @@ function showDet(id){
   var html='<table style="width:100%;font-size:13px;border-collapse:collapse">';
   for(var i=0;i<rows.length;i++){
     html+='<tr><td style="color:#6c7086;padding:5px 8px;width:80px">'+rows[i][0]+'</td><td style="padding:5px 8px;font-weight:bold">'+rows[i][1]+'</td></tr>';
+  }
+  if(r.suumo_url){
+    html+='<tr><td colspan="2" style="padding:10px 8px 4px"><a href="'+r.suumo_url+'" target="_blank" class="btn btn-blue" style="text-decoration:none;display:inline-block">SUUMOで見る ↗</a></td></tr>';
   }
   html+='</table>';
   document.getElementById("detBody").innerHTML=html;

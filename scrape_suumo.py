@@ -116,6 +116,12 @@ def parse_block(block, label, today):
 
     addr = extract_field(block, "所在地")
 
+    # 物件詳細ページURL
+    url_m = re.search(r'href="(/ms/chuko/[^"]+)"', block)
+    if not url_m:
+        url_m = re.search(r'href="(/jj/bukken/detail/[^"]+)"', block)
+    suumo_url = ("https://suumo.jp" + url_m.group(1)) if url_m else ""
+
     return {
         "area":          label,
         "building":      name,
@@ -126,6 +132,7 @@ def parse_block(block, label, today):
         "size":          round(size, 1),
         "floor":         floor,
         "status":        "販売中",
+        "suumo_url":     suumo_url,
     }
 
 
