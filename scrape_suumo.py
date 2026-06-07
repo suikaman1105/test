@@ -202,7 +202,7 @@ def parse_block(block, label, today):
 def scrape_target(label, base_url, max_pages, sleep_sec, today, building_filter=None):
     records = []
     # 新築（bs=010）か中古（bs=021）かURLで判別
-    is_shinchiku = any(x in base_url for x in ["bs=010", "bs=011", "JJ010FJ"])
+    is_shinchiku = "bs=010" in base_url
 
     for page in range(1, max_pages + 1):
         url = build_page_url(base_url, page)
