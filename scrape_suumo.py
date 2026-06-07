@@ -110,6 +110,53 @@ def extract_field(block, label):
     return strip_tags(m.group(1)) if m else ""
 
 
+def parse_block_shinchiku(block, label, today):
+    """新築マンション用パーサー（cassette property_unit 構造）"""
+    # 物件名・URL
+    m = re.search(r'class="cassette_header-title[^"]*"\s*>(.*?)</a>', block, re.DOTALL)
+    if not m:
+        return None
+    name = strip_tags(m.group(1)).strip()
+
+    url_m = re.search(r'href="(/ms/shinchiku/[^"]+)"', block)
+    suumo_url = ("https://suumo.jp" + url_m.group(1)) if url_m else ""
+
+    # 価格（複数部屋あれば最低価格）
+    prices_raw = re.findall(r'cassette_price-accent[^>]*>\s*(.*?)</span>', block, re.DOTALL)
+    prices = [parse_price(strip_tags(p)) for p in prices_raw]
+    prices = [p for p in prices if p]
+    if not prices:
+        return None
+    total = min(prices)
+
+    # 面積（最小）
+    sizes = [float(s) for s in re.findall(r'([\d.]+)m<sup>2</sup>', block)]
+    size = min(sizes) if sizes else None
+    if not size or size <= 0:
+        return None
+
+    # 階（所在階）
+    floor_m = re.search(r'(\d+)階', block)
+    floor = int(floor_m.group(1)) if floor_m else 1
+
+    # 所在地
+    addr_m = re.search(r'class="cassette_basic-value"[^>]*>\s*([^<]+都[^<]+)</p>', block)
+    addr = addr_m.group(1).strip() if addr_m else ""
+
+    return {
+        "area":          label,
+        "building":      name,
+        "address":       addr,
+        "date":          today,
+        "price_per_sqm": round(total * 10000 / size),
+        "total_price":   total,
+        "size":          round(size, 1),
+        "floor":         floor,
+        "status":        "販売中",
+        "suumo_url":     suumo_url,
+    }
+
+
 def parse_block(block, label, today):
     name = extract_field(block, "物件名")
     if not name:
@@ -154,6 +201,9 @@ def parse_block(block, label, today):
 
 def scrape_target(label, base_url, max_pages, sleep_sec, today, building_filter=None):
     records = []
+    # 新築（bs=010）か中古（bs=021）かURLで判別
+    is_shinchiku = "bs=010" in base_url or "JJ010FJ" in base_url
+
     for page in range(1, max_pages + 1):
         url = build_page_url(base_url, page)
         print(f"    p{page} ...", end=" ", flush=True)
@@ -162,10 +212,13 @@ def scrape_target(label, base_url, max_pages, sleep_sec, today, building_filter=
             break
         time.sleep(sleep_sec)
 
-        parts = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
+        if is_shinchiku:
+            parts = re.split(r'(?=<[^>]+class="[^"]*cassette property_unit[^"]*")', html)
+        else:
+            parts = re.split(r'(?=<[^>]+class="[^"]*dottable[^"]*--cassette[^"]*")', html)
         before = len(records)
         for part in parts[1:]:
-            rec = parse_block(part, label, today)
+            rec = parse_block_shinchiku(part, label, today) if is_shinchiku else parse_block(part, label, today)
             if not rec:
                 continue
             # building_filter が指定されていれば物件名で絞り込む
