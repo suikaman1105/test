@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マンション価格モニタリングダッシュボード</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; background: #1e1e2e; color: #cdd6f4; min-height: 100vh; }
+
+  header { background: #181825; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #313244; }
+  header h1 { font-size: 20px; font-weight: 700; }
+  #timestamp { font-size: 12px; color: #6c7086; }
+
+  .stats { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
+  .stat-card { background: #313244; border-radius: 10px; padding: 12px 20px; min-width: 130px; text-align: center; }
+  .stat-card .label { font-size: 11px; color: #6c7086; margin-bottom: 4px; }
+  .stat-card .value { font-size: 20px; font-weight: 700; }
+
+  .filters { display: flex; gap: 12px; padding: 0 24px 12px; flex-wrap: wrap; align-items: center; }
+  .filters label { font-size: 13px; color: #a6adc8; }
+  .filters select, .filters input { background: #313244; border: none; border-radius: 6px; color: #cdd6f4; padding: 6px 10px; font-size: 13px; outline: none; }
+  .filters input { width: 180px; }
+  .btn { padding: 7px 16px; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-blue { background: #89b4fa; color: #1e1e2e; }
+  .btn-green { background: #a6e3a1; color: #1e1e2e; }
+  .btn-orange { background: #fab387; color: #1e1e2e; }
+  .btn-red { background: #f38ba8; color: #1e1e2e; }
+  .spacer { flex: 1; }
+
+  .table-wrap { overflow-x: auto; padding: 0 24px 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #45475a; padding: 10px 12px; text-align: center; cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; }
+  thead th:hover { background: #585b70; }
+  thead th .arrow { font-size: 10px; margin-left: 4px; color: #89b4fa; }
+  tbody tr { border-bottom: 1px solid #313244; }
+  tbody tr:hover { background: #2a2a3e; }
+  tbody td { padding: 9px 12px; text-align: center; white-space: nowrap; }
+  .status-active { color: #a6e3a1; font-weight: 600; }
+  .status-sold { color: #6c7086; }
+  .action-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; }
+  .action-btn:hover { background: #45475a; }
+
+  .statusbar { background: #181825; padding: 6px 24px; font-size: 12px; color: #6c7086; border-top: 1px solid #313244; }
+
+  /* Modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; justify-content: center; align-items: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #313244; border-radius: 12px; padding: 28px; width: 380px; max-width: 95vw; }
+  .modal h2 { font-size: 16px; margin-bottom: 18px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal .field label { display: block; font-size: 12px; color: #a6adc8; margin-bottom: 4px; }
+  .modal .field input, .modal .field select { width: 100%; background: #1e1e2e; border: 1px solid #45475a; border-radius: 6px; color: #cdd6f4; padding: 7px 10px; font-size: 13px; outline: none; }
+  .modal .field input:focus, .modal .field select:focus { border-color: #89b4fa; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  /* Chart */
+  #chart-wrap { padding: 0 24px 24px; display: none; }
+  #chart-wrap h2 { font-size: 14px; color: #a6adc8; margin-bottom: 12px; }
+  #chart-canvas { width: 100%; height: 260px; background: #181825; border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏢 マンション価格モニタリング</h1>
+  <span id="timestamp"></span>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<div class="filters">
+  <label>エリア</label>
+  <select id="f-area" onchange="applyFilter()">
+    <option value="">すべて</option>
+  </select>
+  <label>ステータス</label>
+  <select id="f-status" onchange="applyFilter()">
+    <option value="">すべて</option>
+    <option value="販売中">販売中</option>
+    <option value="成約済">成約済</option>
+  </select>
+  <label>キーワード</label>
+  <input type="text" id="f-kw" placeholder="物件名・エリア" oninput="applyFilter()">
+  <div class="spacer"></div>
+  <button class="btn btn-blue" onclick="openAddModal()">＋ 追加</button>
+  <button class="btn btn-green" onclick="exportCSV()">CSV出力</button>
+  <button class="btn btn-orange" onclick="toggleChart()">グラフ表示</button>
+</div>
+
+<div id="chart-wrap">
+  <h2>エリア別平均単価 (万円/㎡)</h2>
+  <canvas id="chart-canvas"></canvas>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr id="thead-row"></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="statusbar" id="statusbar"></div>
+
+<!-- Add Modal -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <h2>物件データ追加</h2>
+    <div class="field"><label>エリア</label>
+      <select id="m-area"></select></div>
+    <div class="field"><label>物件名</label>
+      <input id="m-building" type="text"></div>
+    <div class="field"><label>日付 (YYYY-MM-DD)</label>
+      <input id="m-date" type="date"></div>
+    <div class="field"><label>単価 (万円/㎡)</label>
+      <input id="m-price" type="number" step="0.1"></div>
+    <div class="field"><label>総額 (万円)</label>
+      <input id="m-total" type="number" step="0.1"></div>
+    <div class="field"><label>面積 (㎡)</label>
+      <input id="m-size" type="number" step="0.1"></div>
+    <div class="field"><label>階</label>
+      <input id="m-floor" type="number" min="1"></div>
+    <div class="field"><label>ステータス</label>
+      <select id="m-status"><option>販売中</option><option>成約済</option></select></div>
+    <div class="modal-actions">
+      <button class="btn" style="background:#45475a;color:#cdd6f4" onclick="closeAddModal()">キャンセル</button>
+      <button class="btn btn-blue" onclick="addRecord()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal">
+    <h2>物件詳細</h2>
+    <div id="detail-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="deleteRecord()">削除</button>
+      <button class="btn" style="background:#45475a;color:#cdd6f4" onclick="closeDetailModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AREAS = ["港区","渋谷区","新宿区","目黒区","品川区","中央区","千代田区","豊島区","世田谷区","文京区"];
+const BUILDINGS = {
+  "港区":["パークタワー芝浦","ザ・ベイリーフ","グランドパーク白金"],
+  "渋谷区":["パークコート渋谷","代官山アドレス","恵比寿ガーデンテラス"],
+  "新宿区":["新宿パークタワー","野村不動産西新宿","ワールドシティタワー"],
+  "目黒区":["目黒雅叙園","MID GARDEN目黒","パークハウス中目黒"],
+  "品川区":["大崎ウィズタワー","品川シーサイド","ザ・タワー大崎"],
+  "中央区":["勝どきザタワー","晴海トリトン","月島タワー"],
+  "千代田区":["ザ・パークハウス千代田","麹町パークマンション","九段北の杜"],
+  "豊島区":["ルーセントタワー池袋","グランエミオ目白","Brillia Tower池袋"],
+  "世田谷区":["ライオンズ三軒茶屋","パークシティ武蔵野","クレッセント自由が丘"],
+  "文京区":["文京ガーデン","本郷パークハウス","ブリリア文京後楽園"],
+};
+const BASE_PRICES = {
+  "港区":18000,"渋谷区":16000,"新宿区":13000,"目黒区":14000,"品川区":12000,
+  "中央区":13500,"千代田区":17000,"豊島区":11000,"世田谷区":10000,"文京区":12500,
+};
+const COLS = [
+  {key:"id",label:"ID",w:"50px"},
+  {key:"area",label:"エリア",w:"80px"},
+  {key:"building",label:"物件名",w:""},
+  {key:"date",label:"日付",w:"100px"},
+  {key:"price_per_sqm",label:"単価(万円/㎡)",w:"120px"},
+  {key:"total_price",label:"総額(万円)",w:"100px"},
+  {key:"size",label:"面積(㎡)",w:"80px"},
+  {key:"floor",label:"階",w:"50px"},
+  {key:"status",label:"ステータス",w:"90px"},
+];
+const COLORS = ["#89b4fa","#a6e3a1","#f9e2af","#f38ba8","#94e2d5","#cba6f7","#fab387","#eba0ac","#b4befe","#74c7ec"];
+
+let data = [], filtered = [], sortKey = "date", sortAsc = false, selectedId = null, chartVisible = false;
+
+function rand(min,max){ return min + Math.random()*(max-min); }
+function fmt(n,d=0){ return Number(n).toLocaleString("ja-JP",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+function generateData(){
+  let id=1, result=[], today=new Date();
+  for(const [area, buildings] of Object.entries(BUILDINGS)){
+    for(const building of buildings){
+      for(let i=0;i<6;i++){
+        const d = new Date(today); d.setMonth(d.getMonth()-i);
+        const price = BASE_PRICES[area]*rand(0.9,1.1);
+        const size = rand(40,120);
+        result.push({
+          id:id++, area, building,
+          date: d.toISOString().slice(0,10),
+          price_per_sqm: Math.round(price),
+          total_price: Math.round(price*size/10000),
+          size: Math.round(size*10)/10,
+          floor: Math.floor(rand(1,30)),
+          status: Math.random()<0.75?"販売中":"成約済",
+        });
+      }
+    }
+  }
+  return result;
+}
+
+function loadData(){
+  const raw = localStorage.getItem("mansion_data");
+  data = raw ? JSON.parse(raw) : generateData();
+}
+function saveData(){ localStorage.setItem("mansion_data", JSON.stringify(data)); }
+
+function applyFilter(){
+  const area = document.getElementById("f-area").value;
+  const status = document.getElementById("f-status").value;
+  const kw = document.getElementById("f-kw").value.trim();
+  filtered = data.filter(r =>
+    (!area || r.area===area) &&
+    (!status || r.status===status) &&
+    (!kw || r.building.includes(kw) || r.area.includes(kw))
+  );
+  filtered.sort((a,b)=>{
+    let av=a[sortKey], bv=b[sortKey];
+    return sortAsc ? (av>bv?1:av<bv?-1:0) : (av<bv?1:av>bv?-1:0);
+  });
+  renderStats();
+  renderTable();
+  if(chartVisible) drawChart();
+}
+
+function renderStats(){
+  const active = filtered.filter(r=>r.status==="販売中");
+  const prices = filtered.map(r=>r.price_per_sqm);
+  const avg = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+  const max = prices.length ? Math.max(...prices) : 0;
+  const min = prices.length ? Math.min(...prices) : 0;
+  const cards = [
+    {label:"総件数", value:`${filtered.length.toLocaleString()}件`, color:"#89b4fa"},
+    {label:"販売中", value:`${active.length.toLocaleString()}件`, color:"#a6e3a1"},
+    {label:"平均単価", value:`${fmt(avg)}万円/㎡`, color:"#f9e2af"},
+    {label:"最高単価", value:`${fmt(max)}万円/㎡`, color:"#f38ba8"},
+    {label:"最低単価", value:`${fmt(min)}万円/㎡`, color:"#94e2d5"},
+  ];
+  document.getElementById("stats").innerHTML = cards.map(c=>`
+    <div class="stat-card">
+      <div class="label">${c.label}</div>
+      <div class="value" style="color:${c.color}">${c.value}</div>
+    </div>`).join("");
+}
+
+function renderTable(){
+  // Thead
+  document.getElementById("thead-row").innerHTML = COLS.map(c=>`
+    <th style="${c.w?'width:'+c.w:''}" onclick="sortBy('${c.key}')">
+      ${c.label}<span class="arrow">${sortKey===c.key?(sortAsc?"▲":"▼"):""}</span>
+    </th>`).join("") + "<th style='width:60px'>操作</th>";
+
+  // Tbody
+  document.getElementById("tbody").innerHTML = filtered.map(r=>`
+    <tr>
+      <td>${r.id}</td>
+      <td>${r.area}</td>
+      <td style="text-align:left">${r.building}</td>
+      <td>${r.date}</td>
+      <td>${fmt(r.price_per_sqm)}</td>
+      <td>${fmt(r.total_price)}</td>
+      <td>${r.size.toFixed(1)}</td>
+      <td>${r.floor}</td>
+      <td class="${r.status==='販売中'?'status-active':'status-sold'}">${r.status}</td>
+      <td><button class="action-btn" title="詳細" onclick="openDetail(${r.id})">🔍</button></td>
+    </tr>`).join("");
+
+  document.getElementById("statusbar").textContent =
+    `${filtered.length}件表示中（🔍アイコンで詳細表示）`;
+}
+
+function sortBy(key){
+  if(sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; }
+  applyFilter();
+}
+
+// Add modal
+function openAddModal(){
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById("m-date").value = today;
+  document.getElementById("m-price").value = "";
+  document.getElementById("m-total").value = "";
+  document.getElementById("m-size").value = "";
+  document.getElementById("m-floor").value = "";
+  document.getElementById("m-building").value = "";
+  document.getElementById("add-modal").classList.add("open");
+}
+function closeAddModal(){ document.getElementById("add-modal").classList.remove("open"); }
+function addRecord(){
+  const area = document.getElementById("m-area").value;
+  const building = document.getElementById("m-building").value.trim();
+  const date = document.getElementById("m-date").value;
+  const price = parseFloat(document.getElementById("m-price").value);
+  const total = parseFloat(document.getElementById("m-total").value);
+  const size = parseFloat(document.getElementById("m-size").value);
+  const floor = parseInt(document.getElementById("m-floor").value);
+  const status = document.getElementById("m-status").value;
+  if(!building||!date||isNaN(price)||isNaN(total)||isNaN(size)||isNaN(floor)){
+    alert("すべての項目を正しく入力してください"); return;
+  }
+  const newId = data.length ? Math.max(...data.map(r=>r.id))+1 : 1;
+  data.push({id:newId,area,building,date,price_per_sqm:price,total_price:total,size,floor,status});
+  saveData(); applyFilter(); closeAddModal();
+}
+
+// Detail modal
+function openDetail(id){
+  const r = data.find(x=>x.id===id); if(!r) return;
+  selectedId = id;
+  document.getElementById("detail-content").innerHTML = `
+    <table style="width:100%;font-size:13px;border-collapse:collapse">
+      ${[
+        ["エリア",r.area],["物件名",r.building],["日付",r.date],
+        ["単価",`${fmt(r.price_per_sqm)} 万円/㎡`],
+        ["総額",`${fmt(r.total_price)} 万円`],
+        ["面積",`${r.size.toFixed(1)} ㎡`],["階",`${r.floor} 階`],
+        ["ステータス",r.status],
+      ].map(([l,v])=>`<tr><td style="color:#6c7086;padding:6px 8px;width:90px">${l}</td>
+        <td style="padding:6px 8px;font-weight:600">${v}</td></tr>`).join("")}
+    </table>`;
+  document.getElementById("detail-modal").classList.add("open");
+}
+function closeDetailModal(){ document.getElementById("detail-modal").classList.remove("open"); selectedId=null; }
+function deleteRecord(){
+  if(!selectedId || !confirm("このデータを削除しますか？")) return;
+  data = data.filter(r=>r.id!==selectedId);
+  saveData(); applyFilter(); closeDetailModal();
+}
+
+// CSV export
+function exportCSV(){
+  const header = COLS.map(c=>c.label).join(",");
+  const rows = filtered.map(r=>COLS.map(c=>JSON.stringify(r[c.key]??"")||"").join(","));
+  const blob = new Blob(["﻿"+header+"\n"+rows.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mansion_data_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// Chart
+function toggleChart(){
+  chartVisible = !chartVisible;
+  document.getElementById("chart-wrap").style.display = chartVisible?"block":"none";
+  if(chartVisible) drawChart();
+}
+function drawChart(){
+  const canvas = document.getElementById("chart-canvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.offsetWidth, H = 260;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  const areaMap = {};
+  filtered.forEach(r=>{ (areaMap[r.area]||(areaMap[r.area]=[])).push(r.price_per_sqm); });
+  const avgs = Object.entries(areaMap).map(([a,ps])=>({area:a,avg:ps.reduce((x,y)=>x+y,0)/ps.length}));
+  if(!avgs.length) return;
+  const maxVal = Math.max(...avgs.map(x=>x.avg));
+  const ml=50,mr=20,mt=30,mb=70;
+  const cw=W-ml-mr, ch=H-mt-mb;
+  const bw = Math.max(10, Math.floor(cw/avgs.length)-8);
+
+  avgs.forEach(({area,avg},i){
+    const x = ml + i*(cw/avgs.length) + (cw/avgs.length-bw)/2;
+    const bh = avg/maxVal*ch*0.9;
+    const y = mt+ch-bh;
+    ctx.fillStyle = COLORS[i%COLORS.length];
+    ctx.beginPath();
+    ctx.roundRect(x,y,bw,bh,4);
+    ctx.fill();
+    ctx.fillStyle="#cdd6f4"; ctx.font="11px Helvetica"; ctx.textAlign="center";
+    ctx.fillText(`${Math.round(avg).toLocaleString()}`,x+bw/2,y-6);
+    ctx.save(); ctx.translate(x+bw/2,mt+ch+8); ctx.rotate(Math.PI/6);
+    ctx.fillText(area,0,0); ctx.restore();
+  });
+  ctx.fillStyle="#a6adc8"; ctx.font="12px Helvetica"; ctx.textAlign="center";
+  ctx.fillText("エリア別平均単価（万円/㎡）",W/2,16);
+}
+
+// Init
+function init(){
+  loadData();
+  // Populate selects
+  const areaFilter = document.getElementById("f-area");
+  const mArea = document.getElementById("m-area");
+  AREAS.forEach(a=>{
+    areaFilter.innerHTML += `<option value="${a}">${a}</option>`;
+    mArea.innerHTML += `<option value="${a}">${a}</option>`;
+  });
+  // Timestamp
+  document.getElementById("timestamp").textContent =
+    `最終更新: ${new Date().toLocaleString("ja-JP")}`;
+  applyFilter();
+}
+
+// Close modal on bg click
+document.getElementById("add-modal").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeAddModal(); });
+document.getElementById("detail-modal").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeDetailModal(); });
+
+init();
+</script>
+</body>
+</html>
