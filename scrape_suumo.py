@@ -50,13 +50,18 @@ def build_page_url(base_url, page):
 
 
 def build_search_url(building_name, prefecture="13"):
-    """建物名からSUUMO検索URLを自動生成する"""
-    # 半角英数をそのまま使い、建物名をフリーワード検索
+    """建物名からSUUMO検索URLを自動生成する
+    SUUMOのfw2は日本語キーワードで検索し、英字混じりだと0件になるため
+    日本語部分だけを抽出して検索URLを組み立てる
+    """
+    # 日本語（ひらがな・カタカナ・漢字）部分だけ抽出してスペース結合
+    ja_words = re.findall(r'[ぁ-んァ-ン一-龥ー]+', building_name)
+    search_word = " ".join(ja_words) if ja_words else building_name
     params = {
         "ar":  "030",
         "bs":  "021",
         "ta":  prefecture,
-        "fw2": building_name,   # フリーワード検索
+        "fw2": search_word,
     }
     base = "https://suumo.jp/jj/bukken/ichiran/JJ012FC001/?"
     return base + urllib.parse.urlencode(params)
@@ -165,7 +170,27 @@ def scrape_target(label, base_url, max_pages, sleep_sec, today, building_filter=
                 continue
             # building_filter が指定されていれば物件名で絞り込む
             if building_filter:
-                if not any(kw in rec["building"] for kw in building_filter):
+                name = rec["building"]
+                # 全角→半角に正規化して比較
+                name_norm = name.translate(str.maketrans(
+                    'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+                    'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+                    '０１２３４５６７８９　',
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                    'abcdefghijklmnopqrstuvwxyz'
+                    '0123456789 '
+                ))
+                kw_norm_list = [
+                    kw.translate(str.maketrans(
+                        'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+                        'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+                        '０１２３４５６７８９　',
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                        'abcdefghijklmnopqrstuvwxyz'
+                        '0123456789 '
+                    )) for kw in building_filter
+                ]
+                if not any(kw in name_norm for kw in kw_norm_list):
                     continue
             records.append(rec)
         print(f"{len(records) - before}件")
