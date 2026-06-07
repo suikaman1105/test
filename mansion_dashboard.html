@@ -2,151 +2,131 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>マンション価格モニタリングダッシュボード</title>
+<title>マンション価格モニタリング</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: "Helvetica Neue", Arial, sans-serif; background: #1e1e2e; color: #cdd6f4; min-height: 100vh; }
-
-  header { background: #181825; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #313244; }
-  header h1 { font-size: 20px; font-weight: 700; }
-  #timestamp { font-size: 12px; color: #6c7086; }
-
-  .stats { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
-  .stat-card { background: #313244; border-radius: 10px; padding: 12px 20px; min-width: 130px; text-align: center; }
-  .stat-card .label { font-size: 11px; color: #6c7086; margin-bottom: 4px; }
-  .stat-card .value { font-size: 20px; font-weight: 700; }
-
-  .filters { display: flex; gap: 12px; padding: 0 24px 12px; flex-wrap: wrap; align-items: center; }
-  .filters label { font-size: 13px; color: #a6adc8; }
-  .filters select, .filters input { background: #313244; border: none; border-radius: 6px; color: #cdd6f4; padding: 6px 10px; font-size: 13px; outline: none; }
-  .filters input { width: 180px; }
-  .btn { padding: 7px 16px; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity .15s; }
-  .btn:hover { opacity: .85; }
-  .btn-blue { background: #89b4fa; color: #1e1e2e; }
-  .btn-green { background: #a6e3a1; color: #1e1e2e; }
-  .btn-orange { background: #fab387; color: #1e1e2e; }
-  .btn-red { background: #f38ba8; color: #1e1e2e; }
-  .spacer { flex: 1; }
-
-  .table-wrap { overflow-x: auto; padding: 0 24px 16px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th { background: #45475a; padding: 10px 12px; text-align: center; cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; }
-  thead th:hover { background: #585b70; }
-  thead th .arrow { font-size: 10px; margin-left: 4px; color: #89b4fa; }
-  tbody tr { border-bottom: 1px solid #313244; }
-  tbody tr:hover { background: #2a2a3e; }
-  tbody td { padding: 9px 12px; text-align: center; white-space: nowrap; }
-  .status-active { color: #a6e3a1; font-weight: 600; }
-  .status-sold { color: #6c7086; }
-  .action-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; }
-  .action-btn:hover { background: #45475a; }
-
-  .statusbar { background: #181825; padding: 6px 24px; font-size: 12px; color: #6c7086; border-top: 1px solid #313244; }
-
-  /* Modal */
-  .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 9999; justify-content: center; align-items: center; }
-  .modal-bg.open { display: flex; }
-  .modal { background: #313244; border-radius: 12px; padding: 28px; width: 380px; max-width: 95vw; }
-  .modal h2 { font-size: 16px; margin-bottom: 18px; }
-  .modal .field { margin-bottom: 14px; }
-  .modal .field label { display: block; font-size: 12px; color: #a6adc8; margin-bottom: 4px; }
-  .modal .field input, .modal .field select { width: 100%; background: #1e1e2e; border: 1px solid #45475a; border-radius: 6px; color: #cdd6f4; padding: 7px 10px; font-size: 13px; outline: none; }
-  .modal .field input:focus, .modal .field select:focus { border-color: #89b4fa; }
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
-
-  /* Chart */
-  #chart-wrap { padding: 0 24px 24px; display: none; }
-  #chart-wrap h2 { font-size: 14px; color: #a6adc8; margin-bottom: 12px; }
-  #chart-canvas { width: 100%; height: 260px; background: #181825; border-radius: 10px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #1e1e2e; color: #cdd6f4; min-height: 100vh; }
+header { background: #181825; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 18px; }
+#ts { font-size: 12px; color: #6c7086; }
+.stats { display: flex; gap: 10px; padding: 14px 24px; flex-wrap: wrap; }
+.card { background: #313244; border-radius: 8px; padding: 10px 18px; text-align: center; min-width: 120px; }
+.card .lbl { font-size: 11px; color: #6c7086; }
+.card .val { font-size: 18px; font-weight: bold; margin-top: 2px; }
+.bar { padding: 8px 24px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.bar label { font-size: 13px; }
+select, input[type=text] { background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; padding: 5px 8px; font-size: 13px; }
+.btn { padding: 6px 14px; border: none; border-radius: 5px; font-weight: bold; font-size: 13px; cursor: pointer; }
+.btn-blue { background: #89b4fa; color: #1e1e2e; }
+.btn-green { background: #a6e3a1; color: #1e1e2e; }
+.btn-orange { background: #fab387; color: #1e1e2e; }
+.btn-red { background: #f38ba8; color: #1e1e2e; }
+.btn-gray { background: #45475a; color: #cdd6f4; }
+.sp { flex: 1; }
+.tbl { overflow-x: auto; padding: 0 24px 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #45475a; padding: 9px 10px; cursor: pointer; white-space: nowrap; text-align: center; }
+th:hover { background: #585b70; }
+td { padding: 8px 10px; border-bottom: 1px solid #313244; text-align: center; white-space: nowrap; }
+tr:hover td { background: #2a2a3e; }
+.on { color: #a6e3a1; font-weight: bold; }
+.off { color: #6c7086; }
+.sbar { background: #181825; padding: 5px 24px; font-size: 12px; color: #6c7086; }
+.overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); z-index: 999; }
+.overlay.show { display: block; }
+.popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #313244; border-radius: 10px; padding: 24px; width: 360px; max-width: 95vw; z-index: 1000; }
+.popup h2 { font-size: 15px; margin-bottom: 16px; }
+.fld { margin-bottom: 12px; }
+.fld label { display: block; font-size: 12px; color: #a6adc8; margin-bottom: 3px; }
+.fld input, .fld select { width: 100%; background: #1e1e2e; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; padding: 7px 9px; font-size: 13px; }
+.fld input:focus, .fld select:focus { outline: none; border-color: #89b4fa; }
+.pop-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.chart-area { display: none; padding: 0 24px 20px; }
+.chart-area h2 { font-size: 13px; color: #a6adc8; margin-bottom: 8px; }
+canvas { background: #181825; border-radius: 8px; display: block; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>🏢 マンション価格モニタリング</h1>
-  <span id="timestamp"></span>
+  <h1>&#127970; マンション価格モニタリング</h1>
+  <span id="ts"></span>
 </header>
 
 <div class="stats" id="stats"></div>
 
-<div class="filters">
+<div class="bar">
   <label>エリア</label>
-  <select id="f-area" onchange="applyFilter()">
+  <select id="fArea" onchange="applyFilter()">
     <option value="">すべて</option>
+    <option>港区</option><option>渋谷区</option><option>新宿区</option>
+    <option>目黒区</option><option>品川区</option><option>中央区</option>
+    <option>千代田区</option><option>豊島区</option><option>世田谷区</option><option>文京区</option>
   </select>
   <label>ステータス</label>
-  <select id="f-status" onchange="applyFilter()">
+  <select id="fStatus" onchange="applyFilter()">
     <option value="">すべて</option>
-    <option value="販売中">販売中</option>
-    <option value="成約済">成約済</option>
+    <option>販売中</option><option>成約済</option>
   </select>
   <label>キーワード</label>
-  <input type="text" id="f-kw" placeholder="物件名・エリア" oninput="applyFilter()">
-  <div class="spacer"></div>
-  <button class="btn btn-blue" onclick="openAddModal()">＋ 追加</button>
-  <button class="btn btn-green" onclick="exportCSV()">CSV出力</button>
-  <button class="btn btn-orange" onclick="toggleChart()">グラフ表示</button>
+  <input type="text" id="fKw" placeholder="物件名・エリア" oninput="applyFilter()" style="width:160px">
+  <div class="sp"></div>
+  <button class="btn btn-blue" onclick="showAdd()">+ 追加</button>
+  <button class="btn btn-green" onclick="doCSV()">CSV出力</button>
+  <button class="btn btn-orange" onclick="toggleChart()">グラフ</button>
 </div>
 
-<div id="chart-wrap">
-  <h2>エリア別平均単価 (万円/㎡)</h2>
-  <canvas id="chart-canvas"></canvas>
+<div class="chart-area" id="chartArea">
+  <h2>エリア別平均単価（万円/&#13217;）</h2>
+  <canvas id="cv" height="220"></canvas>
 </div>
 
-<div class="table-wrap">
+<div class="tbl">
   <table>
-    <thead>
-      <tr id="thead-row"></tr>
-    </thead>
+    <thead><tr id="thead"></tr></thead>
     <tbody id="tbody"></tbody>
   </table>
 </div>
+<div class="sbar" id="sbar"></div>
 
-<div class="statusbar" id="statusbar"></div>
-
-<!-- Add Modal -->
-<div class="modal-bg" id="add-modal">
-  <div class="modal">
-    <h2>物件データ追加</h2>
-    <div class="field"><label>エリア</label>
-      <select id="m-area"></select></div>
-    <div class="field"><label>物件名</label>
-      <input id="m-building" type="text"></div>
-    <div class="field"><label>日付 (YYYY-MM-DD)</label>
-      <input id="m-date" type="date"></div>
-    <div class="field"><label>単価 (万円/㎡)</label>
-      <input id="m-price" type="number" step="0.1" placeholder="例: 15000" oninput="calcTotal()"></div>
-    <div class="field"><label>面積 (㎡)</label>
-      <input id="m-size" type="number" step="0.1" placeholder="例: 70.5" oninput="calcTotal()"></div>
-    <div class="field"><label>総額 (万円) ※単価×面積から自動計算</label>
-      <input id="m-total" type="number" step="0.1" placeholder="自動計算されます"></div>
-    <div class="field"><label>階</label>
-      <input id="m-floor" type="number" min="1" placeholder="例: 5" value="1"></div>
-    <div class="field"><label>ステータス</label>
-      <select id="m-status"><option>販売中</option><option>成約済</option></select></div>
-    <div class="modal-actions">
-      <button class="btn" style="background:#45475a;color:#cdd6f4" onclick="closeAddModal()">キャンセル</button>
-      <button class="btn btn-blue" onclick="addRecord()">追加</button>
-    </div>
+<!-- 追加モーダル -->
+<div class="overlay" id="addOv" onclick="hideAdd()"></div>
+<div class="popup" id="addPop" style="display:none">
+  <h2>物件データ追加</h2>
+  <div class="fld"><label>エリア</label>
+    <select id="mArea">
+      <option>港区</option><option>渋谷区</option><option>新宿区</option>
+      <option>目黒区</option><option>品川区</option><option>中央区</option>
+      <option>千代田区</option><option>豊島区</option><option>世田谷区</option><option>文京区</option>
+    </select></div>
+  <div class="fld"><label>物件名 *</label><input type="text" id="mBuilding" placeholder="例：パークタワー港南"></div>
+  <div class="fld"><label>日付 *</label><input type="date" id="mDate"></div>
+  <div class="fld"><label>単価（万円/&#13217;） *</label><input type="number" id="mPrice" placeholder="例：15000" oninput="autoTotal()"></div>
+  <div class="fld"><label>面積（&#13217;） *</label><input type="number" id="mSize" placeholder="例：70" oninput="autoTotal()"></div>
+  <div class="fld"><label>総額（万円） ※自動計算</label><input type="number" id="mTotal" placeholder="自動入力されます"></div>
+  <div class="fld"><label>階</label><input type="number" id="mFloor" value="1" min="1"></div>
+  <div class="fld"><label>ステータス</label>
+    <select id="mStatus"><option>販売中</option><option>成約済</option></select></div>
+  <div class="pop-btns">
+    <button class="btn btn-gray" onclick="hideAdd()">キャンセル</button>
+    <button class="btn btn-blue" onclick="doAdd()">追加する</button>
   </div>
 </div>
 
-<!-- Detail Modal -->
-<div class="modal-bg" id="detail-modal">
-  <div class="modal">
-    <h2>物件詳細</h2>
-    <div id="detail-content"></div>
-    <div class="modal-actions">
-      <button class="btn btn-red" onclick="deleteRecord()">削除</button>
-      <button class="btn" style="background:#45475a;color:#cdd6f4" onclick="closeDetailModal()">閉じる</button>
-    </div>
+<!-- 詳細モーダル -->
+<div class="overlay" id="detOv" onclick="hideDet()"></div>
+<div class="popup" id="detPop" style="display:none">
+  <h2>物件詳細</h2>
+  <div id="detBody"></div>
+  <div class="pop-btns">
+    <button class="btn btn-red" onclick="doDelete()">削除</button>
+    <button class="btn btn-gray" onclick="hideDet()">閉じる</button>
   </div>
 </div>
 
 <script>
-const AREAS = ["港区","渋谷区","新宿区","目黒区","品川区","中央区","千代田区","豊島区","世田谷区","文京区"];
-const BUILDINGS = {
+var AREAS = ["港区","渋谷区","新宿区","目黒区","品川区","中央区","千代田区","豊島区","世田谷区","文京区"];
+var BUILDINGS = {
   "港区":["パークタワー芝浦","ザ・ベイリーフ","グランドパーク白金"],
   "渋谷区":["パークコート渋谷","代官山アドレス","恵比寿ガーデンテラス"],
   "新宿区":["新宿パークタワー","野村不動産西新宿","ワールドシティタワー"],
@@ -156,264 +136,269 @@ const BUILDINGS = {
   "千代田区":["ザ・パークハウス千代田","麹町パークマンション","九段北の杜"],
   "豊島区":["ルーセントタワー池袋","グランエミオ目白","Brillia Tower池袋"],
   "世田谷区":["ライオンズ三軒茶屋","パークシティ武蔵野","クレッセント自由が丘"],
-  "文京区":["文京ガーデン","本郷パークハウス","ブリリア文京後楽園"],
+  "文京区":["文京ガーデン","本郷パークハウス","ブリリア文京後楽園"]
 };
-const BASE_PRICES = {
-  "港区":18000,"渋谷区":16000,"新宿区":13000,"目黒区":14000,"品川区":12000,
-  "中央区":13500,"千代田区":17000,"豊島区":11000,"世田谷区":10000,"文京区":12500,
-};
-const COLS = [
-  {key:"id",label:"ID",w:"50px"},
-  {key:"area",label:"エリア",w:"80px"},
-  {key:"building",label:"物件名",w:""},
-  {key:"date",label:"日付",w:"100px"},
-  {key:"price_per_sqm",label:"単価(万円/㎡)",w:"120px"},
-  {key:"total_price",label:"総額(万円)",w:"100px"},
-  {key:"size",label:"面積(㎡)",w:"80px"},
-  {key:"floor",label:"階",w:"50px"},
-  {key:"status",label:"ステータス",w:"90px"},
+var BASE = {"港区":18000,"渋谷区":16000,"新宿区":13000,"目黒区":14000,"品川区":12000,"中央区":13500,"千代田区":17000,"豊島区":11000,"世田谷区":10000,"文京区":12500};
+var COLS = [
+  {k:"id",l:"ID"},{k:"area",l:"エリア"},{k:"building",l:"物件名"},
+  {k:"date",l:"日付"},{k:"price_per_sqm",l:"単価(万円/㎡)"},
+  {k:"total_price",l:"総額(万円)"},{k:"size",l:"面積(㎡)"},
+  {k:"floor",l:"階"},{k:"status",l:"ステータス"}
 ];
-const COLORS = ["#89b4fa","#a6e3a1","#f9e2af","#f38ba8","#94e2d5","#cba6f7","#fab387","#eba0ac","#b4befe","#74c7ec"];
+var COLORS=["#89b4fa","#a6e3a1","#f9e2af","#f38ba8","#94e2d5","#cba6f7","#fab387","#eba0ac","#b4befe","#74c7ec"];
 
-let data = [], filtered = [], sortKey = "date", sortAsc = false, selectedId = null, chartVisible = false;
+var data=[], filtered=[], sortKey="date", sortAsc=false, selId=null, chartOn=false;
 
-function rand(min,max){ return min + Math.random()*(max-min); }
-function fmt(n,d=0){ return Number(n).toLocaleString("ja-JP",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function rnd(a,b){return a+Math.random()*(b-a);}
+function fmt(n){return Number(n).toLocaleString("ja-JP");}
 
-function generateData(){
-  let id=1, result=[], today=new Date();
-  for(const [area, buildings] of Object.entries(BUILDINGS)){
-    for(const building of buildings){
-      for(let i=0;i<6;i++){
-        const d = new Date(today); d.setMonth(d.getMonth()-i);
-        const price = BASE_PRICES[area]*rand(0.9,1.1);
-        const size = rand(40,120);
-        result.push({
-          id:id++, area, building,
-          date: d.toISOString().slice(0,10),
-          price_per_sqm: Math.round(price),
-          total_price: Math.round(price*size/10000),
-          size: Math.round(size*10)/10,
-          floor: Math.floor(rand(1,30)),
-          status: Math.random()<0.75?"販売中":"成約済",
+function genData(){
+  var res=[],id=1,now=new Date();
+  for(var a=0;a<AREAS.length;a++){
+    var area=AREAS[a], bs=BUILDINGS[area];
+    for(var b=0;b<bs.length;b++){
+      for(var i=0;i<6;i++){
+        var d=new Date(now); d.setMonth(d.getMonth()-i);
+        var price=BASE[area]*rnd(0.9,1.1);
+        var size=rnd(40,120);
+        res.push({
+          id:id++,area:area,building:bs[b],
+          date:d.toISOString().slice(0,10),
+          price_per_sqm:Math.round(price),
+          total_price:Math.round(price*size/10000),
+          size:Math.round(size*10)/10,
+          floor:Math.floor(rnd(1,30)),
+          status:Math.random()<0.75?"販売中":"成約済"
         });
       }
     }
   }
-  return result;
+  return res;
 }
 
 function loadData(){
-  const raw = localStorage.getItem("mansion_data");
-  data = raw ? JSON.parse(raw) : generateData();
+  try{
+    var raw=localStorage.getItem("mansion_v2");
+    data=raw?JSON.parse(raw):genData();
+  }catch(e){data=genData();}
 }
-function saveData(){ localStorage.setItem("mansion_data", JSON.stringify(data)); }
+function saveData(){
+  try{localStorage.setItem("mansion_v2",JSON.stringify(data));}catch(e){}
+}
 
 function applyFilter(){
-  const area = document.getElementById("f-area").value;
-  const status = document.getElementById("f-status").value;
-  const kw = document.getElementById("f-kw").value.trim();
-  filtered = data.filter(r =>
-    (!area || r.area===area) &&
-    (!status || r.status===status) &&
-    (!kw || r.building.includes(kw) || r.area.includes(kw))
-  );
-  filtered.sort((a,b)=>{
-    let av=a[sortKey], bv=b[sortKey];
-    return sortAsc ? (av>bv?1:av<bv?-1:0) : (av<bv?1:av>bv?-1:0);
+  var a=document.getElementById("fArea").value;
+  var s=document.getElementById("fStatus").value;
+  var k=document.getElementById("fKw").value;
+  filtered=data.filter(function(r){
+    return (!a||r.area===a)&&(!s||r.status===s)&&(!k||r.building.indexOf(k)>=0||r.area.indexOf(k)>=0);
+  });
+  filtered.sort(function(x,y){
+    var xv=x[sortKey],yv=y[sortKey];
+    if(xv<yv)return sortAsc?-1:1;
+    if(xv>yv)return sortAsc?1:-1;
+    return 0;
   });
   renderStats();
   renderTable();
-  if(chartVisible) drawChart();
+  if(chartOn)drawChart();
 }
 
 function renderStats(){
-  const active = filtered.filter(r=>r.status==="販売中");
-  const prices = filtered.map(r=>r.price_per_sqm);
-  const avg = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
-  const max = prices.length ? Math.max(...prices) : 0;
-  const min = prices.length ? Math.min(...prices) : 0;
-  const cards = [
-    {label:"総件数", value:`${filtered.length.toLocaleString()}件`, color:"#89b4fa"},
-    {label:"販売中", value:`${active.length.toLocaleString()}件`, color:"#a6e3a1"},
-    {label:"平均単価", value:`${fmt(avg)}万円/㎡`, color:"#f9e2af"},
-    {label:"最高単価", value:`${fmt(max)}万円/㎡`, color:"#f38ba8"},
-    {label:"最低単価", value:`${fmt(min)}万円/㎡`, color:"#94e2d5"},
+  var active=0,sum=0,mx=0,mn=Infinity;
+  for(var i=0;i<filtered.length;i++){
+    var p=filtered[i].price_per_sqm;
+    if(filtered[i].status==="販売中")active++;
+    sum+=p;
+    if(p>mx)mx=p;
+    if(p<mn)mn=p;
+  }
+  var avg=filtered.length?sum/filtered.length:0;
+  if(!filtered.length)mn=0;
+  var cards=[
+    {l:"総件数",v:filtered.length+"件",c:"#89b4fa"},
+    {l:"販売中",v:active+"件",c:"#a6e3a1"},
+    {l:"平均単価",v:fmt(Math.round(avg))+"万円/㎡",c:"#f9e2af"},
+    {l:"最高単価",v:fmt(mx)+"万円/㎡",c:"#f38ba8"},
+    {l:"最低単価",v:fmt(mn)+"万円/㎡",c:"#94e2d5"}
   ];
-  document.getElementById("stats").innerHTML = cards.map(c=>`
-    <div class="stat-card">
-      <div class="label">${c.label}</div>
-      <div class="value" style="color:${c.color}">${c.value}</div>
-    </div>`).join("");
+  var html="";
+  for(var i=0;i<cards.length;i++){
+    html+='<div class="card"><div class="lbl">'+cards[i].l+'</div><div class="val" style="color:'+cards[i].c+'">'+cards[i].v+'</div></div>';
+  }
+  document.getElementById("stats").innerHTML=html;
 }
 
 function renderTable(){
-  // Thead
-  document.getElementById("thead-row").innerHTML = COLS.map(c=>`
-    <th style="${c.w?'width:'+c.w:''}" onclick="sortBy('${c.key}')">
-      ${c.label}<span class="arrow">${sortKey===c.key?(sortAsc?"▲":"▼"):""}</span>
-    </th>`).join("") + "<th style='width:60px'>操作</th>";
+  var th="";
+  for(var i=0;i<COLS.length;i++){
+    var arr=sortKey===COLS[i].k?(sortAsc?"&#9650;":"&#9660;"):"";
+    th+='<th onclick="sortBy(\''+COLS[i].k+'\')">'+COLS[i].l+' '+arr+'</th>';
+  }
+  th+='<th>詳細</th>';
+  document.getElementById("thead").innerHTML=th;
 
-  // Tbody
-  document.getElementById("tbody").innerHTML = filtered.map(r=>`
-    <tr>
-      <td>${r.id}</td>
-      <td>${r.area}</td>
-      <td style="text-align:left">${r.building}</td>
-      <td>${r.date}</td>
-      <td>${fmt(r.price_per_sqm)}</td>
-      <td>${fmt(r.total_price)}</td>
-      <td>${r.size.toFixed(1)}</td>
-      <td>${r.floor}</td>
-      <td class="${r.status==='販売中'?'status-active':'status-sold'}">${r.status}</td>
-      <td><button class="action-btn" title="詳細" onclick="openDetail(${r.id})">🔍</button></td>
-    </tr>`).join("");
-
-  document.getElementById("statusbar").textContent =
-    `${filtered.length}件表示中（🔍アイコンで詳細表示）`;
+  var tb="";
+  for(var i=0;i<filtered.length;i++){
+    var r=filtered[i];
+    var sc=r.status==="販売中"?'class="on"':'class="off"';
+    tb+='<tr>';
+    tb+='<td>'+r.id+'</td><td>'+r.area+'</td><td style="text-align:left">'+r.building+'</td>';
+    tb+='<td>'+r.date+'</td><td>'+fmt(r.price_per_sqm)+'</td><td>'+fmt(r.total_price)+'</td>';
+    tb+='<td>'+r.size.toFixed(1)+'</td><td>'+r.floor+'</td>';
+    tb+='<td '+sc+'>'+r.status+'</td>';
+    tb+='<td><button class="btn btn-gray" style="padding:3px 8px;font-size:12px" onclick="showDet('+r.id+')">詳細</button></td>';
+    tb+='</tr>';
+  }
+  document.getElementById("tbody").innerHTML=tb;
+  document.getElementById("sbar").textContent=filtered.length+"件表示中";
 }
 
-function sortBy(key){
-  if(sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; }
+function sortBy(k){
+  if(sortKey===k)sortAsc=!sortAsc; else{sortKey=k;sortAsc=true;}
   applyFilter();
 }
 
-// Add modal
-function calcTotal(){
-  const price = parseFloat(document.getElementById("m-price").value);
-  const size = parseFloat(document.getElementById("m-size").value);
-  if(!isNaN(price) && !isNaN(size)){
-    document.getElementById("m-total").value = Math.round(price * size / 10000 * 10) / 10;
+function showAdd(){
+  document.getElementById("mDate").value=new Date().toISOString().slice(0,10);
+  document.getElementById("mBuilding").value="";
+  document.getElementById("mPrice").value="";
+  document.getElementById("mSize").value="";
+  document.getElementById("mTotal").value="";
+  document.getElementById("mFloor").value="1";
+  document.getElementById("addOv").className="overlay show";
+  document.getElementById("addPop").style.display="block";
+  document.getElementById("mBuilding").focus();
+}
+function hideAdd(){
+  document.getElementById("addOv").className="overlay";
+  document.getElementById("addPop").style.display="none";
+}
+function autoTotal(){
+  var p=parseFloat(document.getElementById("mPrice").value);
+  var s=parseFloat(document.getElementById("mSize").value);
+  if(!isNaN(p)&&!isNaN(s)){
+    document.getElementById("mTotal").value=Math.round(p*s/10000*10)/10;
   }
 }
-function openAddModal(){
-  document.getElementById("m-date").value = new Date().toISOString().slice(0,10);
-  document.getElementById("m-price").value = "";
-  document.getElementById("m-total").value = "";
-  document.getElementById("m-size").value = "";
-  document.getElementById("m-floor").value = "1";
-  document.getElementById("m-building").value = "";
-  const modal = document.getElementById("add-modal");
-  modal.style.display = "flex";
-  modal.classList.add("open");
-  document.getElementById("m-building").focus();
-}
-function closeAddModal(){ const m=document.getElementById("add-modal"); m.classList.remove("open"); m.style.display="none"; }
-function addRecord(){
-  const area = document.getElementById("m-area").value;
-  const building = document.getElementById("m-building").value.trim();
-  const date = document.getElementById("m-date").value;
-  const price = parseFloat(document.getElementById("m-price").value);
-  const size = parseFloat(document.getElementById("m-size").value);
-  const floor = parseInt(document.getElementById("m-floor").value) || 1;
-  const status = document.getElementById("m-status").value;
-  const total = parseFloat(document.getElementById("m-total").value) || Math.round(price * size / 10000 * 10) / 10;
-  const missing = [];
-  if(!building) missing.push("物件名");
-  if(!date) missing.push("日付");
-  if(isNaN(price)) missing.push("単価");
-  if(isNaN(size)) missing.push("面積");
-  if(missing.length){ alert(`以下の項目を入力してください:\n・${missing.join("\n・")}`); return; }
-  const newId = data.length ? Math.max(...data.map(r=>r.id))+1 : 1;
-  data.push({id:newId,area,building,date,price_per_sqm:price,total_price:total,size,floor,status});
-  saveData(); applyFilter(); closeAddModal();
+function doAdd(){
+  var building=document.getElementById("mBuilding").value.trim();
+  var price=parseFloat(document.getElementById("mPrice").value);
+  var size=parseFloat(document.getElementById("mSize").value);
+  var date=document.getElementById("mDate").value;
+  var err=[];
+  if(!building)err.push("物件名");
+  if(isNaN(price))err.push("単価");
+  if(isNaN(size))err.push("面積");
+  if(!date)err.push("日付");
+  if(err.length){alert("入力してください: "+err.join(", "));return;}
+  var total=parseFloat(document.getElementById("mTotal").value);
+  if(isNaN(total))total=Math.round(price*size/10000*10)/10;
+  var floor=parseInt(document.getElementById("mFloor").value)||1;
+  var newId=data.length?Math.max.apply(null,data.map(function(r){return r.id;}))+1:1;
+  data.push({
+    id:newId,
+    area:document.getElementById("mArea").value,
+    building:building,date:date,
+    price_per_sqm:price,total_price:total,size:size,floor:floor,
+    status:document.getElementById("mStatus").value
+  });
+  saveData();applyFilter();hideAdd();
 }
 
-// Detail modal
-function openDetail(id){
-  const r = data.find(x=>x.id===id); if(!r) return;
-  selectedId = id;
-  document.getElementById("detail-content").innerHTML = `
-    <table style="width:100%;font-size:13px;border-collapse:collapse">
-      ${[
-        ["エリア",r.area],["物件名",r.building],["日付",r.date],
-        ["単価",`${fmt(r.price_per_sqm)} 万円/㎡`],
-        ["総額",`${fmt(r.total_price)} 万円`],
-        ["面積",`${r.size.toFixed(1)} ㎡`],["階",`${r.floor} 階`],
-        ["ステータス",r.status],
-      ].map(([l,v])=>`<tr><td style="color:#6c7086;padding:6px 8px;width:90px">${l}</td>
-        <td style="padding:6px 8px;font-weight:600">${v}</td></tr>`).join("")}
-    </table>`;
-  const dm=document.getElementById("detail-modal"); dm.style.display="flex"; dm.classList.add("open");
+function showDet(id){
+  selId=id;
+  var r=null;
+  for(var i=0;i<data.length;i++){if(data[i].id===id){r=data[i];break;}}
+  if(!r)return;
+  var rows=[
+    ["エリア",r.area],["物件名",r.building],["日付",r.date],
+    ["単価",fmt(r.price_per_sqm)+" 万円/㎡"],
+    ["総額",fmt(r.total_price)+" 万円"],
+    ["面積",r.size.toFixed(1)+" ㎡"],["階",r.floor+" 階"],["ステータス",r.status]
+  ];
+  var html='<table style="width:100%;font-size:13px;border-collapse:collapse">';
+  for(var i=0;i<rows.length;i++){
+    html+='<tr><td style="color:#6c7086;padding:5px 8px;width:80px">'+rows[i][0]+'</td><td style="padding:5px 8px;font-weight:bold">'+rows[i][1]+'</td></tr>';
+  }
+  html+='</table>';
+  document.getElementById("detBody").innerHTML=html;
+  document.getElementById("detOv").className="overlay show";
+  document.getElementById("detPop").style.display="block";
 }
-function closeDetailModal(){ const m=document.getElementById("detail-modal"); m.classList.remove("open"); m.style.display="none"; selectedId=null; }
-function deleteRecord(){
-  if(!selectedId || !confirm("このデータを削除しますか？")) return;
-  data = data.filter(r=>r.id!==selectedId);
-  saveData(); applyFilter(); closeDetailModal();
+function hideDet(){
+  document.getElementById("detOv").className="overlay";
+  document.getElementById("detPop").style.display="none";
+  selId=null;
 }
-
-// CSV export
-function exportCSV(){
-  const header = COLS.map(c=>c.label).join(",");
-  const rows = filtered.map(r=>COLS.map(c=>JSON.stringify(r[c.key]??"")||"").join(","));
-  const blob = new Blob(["﻿"+header+"\n"+rows.join("\n")], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `mansion_data_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+function doDelete(){
+  if(!selId)return;
+  if(!confirm("このデータを削除しますか？"))return;
+  data=data.filter(function(r){return r.id!==selId;});
+  saveData();applyFilter();hideDet();
 }
 
-// Chart
+function doCSV(){
+  var lines=["ID,エリア,物件名,日付,単価,総額,面積,階,ステータス"];
+  for(var i=0;i<filtered.length;i++){
+    var r=filtered[i];
+    lines.push([r.id,r.area,'"'+r.building+'"',r.date,r.price_per_sqm,r.total_price,r.size,r.floor,r.status].join(","));
+  }
+  var blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="mansion_"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function toggleChart(){
-  chartVisible = !chartVisible;
-  document.getElementById("chart-wrap").style.display = chartVisible?"block":"none";
-  if(chartVisible) drawChart();
+  chartOn=!chartOn;
+  document.getElementById("chartArea").style.display=chartOn?"block":"none";
+  if(chartOn)drawChart();
 }
 function drawChart(){
-  const canvas = document.getElementById("chart-canvas");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.offsetWidth, H = 260;
-  canvas.width = W; canvas.height = H;
+  var cv=document.getElementById("cv");
+  cv.width=cv.parentElement.offsetWidth-48;
+  var ctx=cv.getContext("2d");
+  var W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);
-
-  const areaMap = {};
-  filtered.forEach(r=>{ (areaMap[r.area]||(areaMap[r.area]=[])).push(r.price_per_sqm); });
-  const avgs = Object.entries(areaMap).map(([a,ps])=>({area:a,avg:ps.reduce((x,y)=>x+y,0)/ps.length}));
-  if(!avgs.length) return;
-  const maxVal = Math.max(...avgs.map(x=>x.avg));
-  const ml=50,mr=20,mt=30,mb=70;
-  const cw=W-ml-mr, ch=H-mt-mb;
-  const bw = Math.max(10, Math.floor(cw/avgs.length)-8);
-
-  avgs.forEach(({area,avg},i){
-    const x = ml + i*(cw/avgs.length) + (cw/avgs.length-bw)/2;
-    const bh = avg/maxVal*ch*0.9;
-    const y = mt+ch-bh;
-    ctx.fillStyle = COLORS[i%COLORS.length];
-    ctx.beginPath();
-    ctx.roundRect(x,y,bw,bh,4);
-    ctx.fill();
-    ctx.fillStyle="#cdd6f4"; ctx.font="11px Helvetica"; ctx.textAlign="center";
-    ctx.fillText(`${Math.round(avg).toLocaleString()}`,x+bw/2,y-6);
-    ctx.save(); ctx.translate(x+bw/2,mt+ch+8); ctx.rotate(Math.PI/6);
-    ctx.fillText(area,0,0); ctx.restore();
-  });
-  ctx.fillStyle="#a6adc8"; ctx.font="12px Helvetica"; ctx.textAlign="center";
-  ctx.fillText("エリア別平均単価（万円/㎡）",W/2,16);
+  var map={};
+  for(var i=0;i<filtered.length;i++){
+    var a=filtered[i].area;
+    if(!map[a])map[a]=[];
+    map[a].push(filtered[i].price_per_sqm);
+  }
+  var areas=Object.keys(map);
+  if(!areas.length)return;
+  var avgs=[];
+  for(var i=0;i<areas.length;i++){
+    var ps=map[areas[i]],s=0;
+    for(var j=0;j<ps.length;j++)s+=ps[j];
+    avgs.push(s/ps.length);
+  }
+  var maxV=Math.max.apply(null,avgs);
+  var ml=10,mr=10,mt=30,mb=60,cw=W-ml-mr,ch=H-mt-mb;
+  var bw=Math.max(10,Math.floor(cw/areas.length)-8);
+  for(var i=0;i<areas.length;i++){
+    var x=ml+i*(cw/areas.length)+(cw/areas.length-bw)/2;
+    var bh=avgs[i]/maxV*ch*0.88;
+    var y=mt+ch-bh;
+    ctx.fillStyle=COLORS[i%COLORS.length];
+    ctx.fillRect(x,y,bw,bh);
+    ctx.fillStyle="#cdd6f4";ctx.font="10px Arial";ctx.textAlign="center";
+    ctx.fillText(Math.round(avgs[i]).toLocaleString(),x+bw/2,y-4);
+    ctx.save();ctx.translate(x+bw/2,mt+ch+6);ctx.rotate(Math.PI/5);
+    ctx.fillText(areas[i],0,0);ctx.restore();
+  }
+  ctx.fillStyle="#a6adc8";ctx.font="11px Arial";ctx.textAlign="center";
+  ctx.fillText("エリア別平均単価（万円/㎡）",W/2,14);
 }
 
-// Init
-function init(){
-  loadData();
-  // Populate selects
-  const areaFilter = document.getElementById("f-area");
-  const mArea = document.getElementById("m-area");
-  AREAS.forEach(a=>{
-    areaFilter.innerHTML += `<option value="${a}">${a}</option>`;
-    mArea.innerHTML += `<option value="${a}">${a}</option>`;
-  });
-  // Timestamp
-  document.getElementById("timestamp").textContent =
-    `最終更新: ${new Date().toLocaleString("ja-JP")}`;
-  applyFilter();
-}
-
-// Close modal on bg click
-document.getElementById("add-modal").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeAddModal(); });
-document.getElementById("detail-modal").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeDetailModal(); });
-
-init();
+// 初期化
+loadData();
+applyFilter();
+document.getElementById("ts").textContent="最終更新: "+new Date().toLocaleString("ja-JP");
 </script>
 </body>
 </html>
