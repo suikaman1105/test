@@ -45,7 +45,7 @@
   .statusbar { background: #181825; padding: 6px 24px; font-size: 12px; color: #6c7086; border-top: 1px solid #313244; }
 
   /* Modal */
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; justify-content: center; align-items: center; }
+  .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 9999; justify-content: center; align-items: center; }
   .modal-bg.open { display: flex; }
   .modal { background: #313244; border-radius: 12px; padding: 28px; width: 380px; max-width: 95vw; }
   .modal h2 { font-size: 16px; margin-bottom: 18px; }
@@ -293,10 +293,12 @@ function openAddModal(){
   document.getElementById("m-size").value = "";
   document.getElementById("m-floor").value = "1";
   document.getElementById("m-building").value = "";
-  document.getElementById("add-modal").classList.add("open");
+  const modal = document.getElementById("add-modal");
+  modal.style.display = "flex";
+  modal.classList.add("open");
   document.getElementById("m-building").focus();
 }
-function closeAddModal(){ document.getElementById("add-modal").classList.remove("open"); }
+function closeAddModal(){ const m=document.getElementById("add-modal"); m.classList.remove("open"); m.style.display="none"; }
 function addRecord(){
   const area = document.getElementById("m-area").value;
   const building = document.getElementById("m-building").value.trim();
@@ -332,9 +334,9 @@ function openDetail(id){
       ].map(([l,v])=>`<tr><td style="color:#6c7086;padding:6px 8px;width:90px">${l}</td>
         <td style="padding:6px 8px;font-weight:600">${v}</td></tr>`).join("")}
     </table>`;
-  document.getElementById("detail-modal").classList.add("open");
+  const dm=document.getElementById("detail-modal"); dm.style.display="flex"; dm.classList.add("open");
 }
-function closeDetailModal(){ document.getElementById("detail-modal").classList.remove("open"); selectedId=null; }
+function closeDetailModal(){ const m=document.getElementById("detail-modal"); m.classList.remove("open"); m.style.display="none"; selectedId=null; }
 function deleteRecord(){
   if(!selectedId || !confirm("このデータを削除しますか？")) return;
   data = data.filter(r=>r.id!==selectedId);
